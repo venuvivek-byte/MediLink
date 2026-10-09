@@ -6,7 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "supabase": "node ./node_modules/supabase/dist/supabase.js",
+    "db:link": "node ./node_modules/supabase/dist/supabase.js link",
+    "db:push": "node ./node_modules/supabase/dist/supabase.js db push",
+    "db:pull": "node ./node_modules/supabase/dist/supabase.js db pull",
+    "db:reset": "node ./node_modules/supabase/dist/supabase.js db reset",
+    "db:status": "node ./node_modules/supabase/dist/supabase.js status",
+    "db:gen-types": "node ./node_modules/supabase/dist/supabase.js gen types typescript --local > lib/types/database.types.ts",
+    "db:gen-types:linked": "node ./node_modules/supabase/dist/supabase.js gen types typescript --linked > lib/types/database.types.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -42,6 +50,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
+    "supabase": "^2.120.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

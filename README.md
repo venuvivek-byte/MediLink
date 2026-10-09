@@ -59,7 +59,53 @@ GEMINI_API_KEY=your-gemini-key
 NEXT_PUBLIC_DEMO_MODE=true
 ```
 
-### 3. Run Locally
+### 3. Database Setup (Supabase CLI)
+
+MediLink includes the **Supabase CLI** as a project dependency with convenient npm scripts.
+
+#### Option A: Remote Supabase Project (Recommended)
+1. **Link your Supabase project**:
+   ```bash
+   npm run supabase -- link --project-ref <your-project-ref>
+   ```
+2. **Push database migrations** (`001_initial_schema.sql` and `002_storage.sql`):
+   ```bash
+   npm run db:push
+   ```
+3. **Generate TypeScript types**:
+   ```bash
+   npm run db:gen-types:linked
+   ```
+
+#### Option B: Local Supabase Stack (Requires Docker)
+1. **Start the local Supabase stack**:
+   ```bash
+   npm run supabase -- start
+   ```
+2. **Apply migrations and seed data**:
+   ```bash
+   npm run db:reset
+   ```
+3. **Generate types from local DB**:
+   ```bash
+   npm run db:gen-types
+   ```
+
+#### Supabase CLI NPM Scripts:
+| Command | Action |
+|---|---|
+| `npm run supabase -- <cmd>` | Execute any Supabase CLI command |
+| `npm run db:link` | Link to a remote Supabase project |
+| `npm run db:push` | Push pending migrations to linked database |
+| `npm run db:pull` | Pull remote database schema changes into migrations |
+| `npm run db:reset` | Reset database and apply migrations + seed data |
+| `npm run db:status` | Check status of local Supabase services |
+| `npm run db:gen-types` | Generate TypeScript definitions from local database |
+| `npm run db:gen-types:linked` | Generate TypeScript definitions from linked remote project |
+
+---
+
+### 4. Run Locally
 
 ```bash
 npm run dev
@@ -69,3 +115,4 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 - **Demo Patient**: Ananya Rao
 - **Clinician Portal PIN**: `482910`
+- **Demo Mode**: Set `NEXT_PUBLIC_DEMO_MODE=true` in `.env.local` to explore the complete feature set without configuring a database.

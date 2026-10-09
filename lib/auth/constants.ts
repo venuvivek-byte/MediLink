@@ -2,9 +2,9 @@
 export const DEMO_SESSION_COOKIE = "mhv_demo_session";
 export const DEMO_SESSION_TTL_SECONDS = 8 * 60 * 60;
 
-/** Paths that never require a patient session. Everything else in the app does. */
-export const AUTH_PAGES = ["/login", "/signup"] as const;
+/** Pages reachable without a patient session. Everything else in the app requires one. */
+export const PUBLIC_PATHS = ["/login", "/signup", "/auth/confirm"] as const;
 
-export function isAuthPage(pathname: string): boolean {
-  return AUTH_PAGES.some((page) => pathname === page || pathname.startsWith(`${page}/`));
+export function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }

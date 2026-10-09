@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { parseConfig, type AppConfig } from "@/lib/config/schema";
-import { DEMO_SESSION_COOKIE, isAuthPage } from "@/lib/auth/constants";
+import { DEMO_SESSION_COOKIE, isPublicPath } from "@/lib/auth/constants";
 
 /**
  * Optimistic routing only. The authoritative session check happens in the
@@ -53,7 +53,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  if (!hasSession && !isAuthPage(pathname)) {
+  if (!hasSession && !isPublicPath(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";

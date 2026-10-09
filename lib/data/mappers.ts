@@ -2,6 +2,7 @@
 // modes present data identically.
 import type { Json, Tables } from "@/lib/types/database.types";
 import { normalizeMedicationName, normalizeTestName } from "@/lib/domain/normalize";
+import { DOCUMENT_ERROR_MESSAGES, type DocumentErrorCode } from "@/lib/documents/errors";
 import type {
   Allergy,
   AuditEvent,
@@ -95,7 +96,12 @@ export function mapDocument(row: Tables<"documents">): DocumentSummary {
     providerName: row.provider_name,
     facilityName: row.facility_name,
     processingStatus: toProcessingStatus(row.extraction_status),
+    processingError: row.processing_error
+      ? (DOCUMENT_ERROR_MESSAGES[row.processing_error as DocumentErrorCode] ?? "Processing failed.")
+      : null,
     reviewStatus: toReviewStatus(row.verification_status),
+    cancelled: row.cancelled_at !== null,
+    pageCount: row.page_count,
     uploadedAt: row.created_at,
   };
 }

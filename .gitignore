@@ -50,3 +50,12 @@ next-env.d.ts
 client_secret*.json
 *.credentials.json
 service-account*.json
+
+# Agent worktrees and local Claude Code state
+/.claude/worktrees/
+/.claude/settings.local.json
+
+# Python OCR service
+/services/ocr/.venv/
+__pycache__/
+*.pyc

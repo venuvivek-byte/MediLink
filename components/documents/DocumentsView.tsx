@@ -1,62 +1,99 @@
 "use client";
 
-import { useState } from "react";
-import { CheckCircle2, FileText, FlaskConical, Info, Trash2, Upload } from "lucide-react";
+import { useRef, useState, useTransition } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { AlertCircle, CheckCircle2, Eye, FileText, FlaskConical, Loader2, RefreshCw, Trash2, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { VerificationBadge } from "@/components/ui/VerificationBadge";
+import { ReviewForm } from "./ReviewForm";
+import { deleteDocumentAction, runDemoSampleAction } from "@/app/(app)/documents/actions";
 import type { AppMode } from "@/lib/config/schema";
 import type { DocumentSummary, ProcessingStatus } from "@/lib/data/types";
+import type { ReviewPayload } from "@/lib/documents/review-payload";
 import { formatDate, humanize } from "@/lib/format";
 
 interface DocumentsViewProps {
   documents: DocumentSummary[];
   mode: AppMode;
   maxUploadBytes: number;
+  demoSamples: { id: string; title: string }[];
 }
 
 const PROCESSING_LABEL: Record<ProcessingStatus, string> = {
-  pending: "Waiting to process",
-  processing: "Processing",
+  pending: "Not processed yet",
+  processing: "Processing…",
   completed: "Processed",
   failed: "Processing failed",
 };
 
-/** Fixed, clearly synthetic sample used to demonstrate the review step. */
-const DEMO_SAMPLE = {
-  filename: "Sample_Prescription_CareClinic.pdf",
-  documentDate: "2025-10-09",
-  provider: "Dr. R. K. Singhal",
-  medication: "Glimepiride 1mg",
-  instructions: "1 tablet once daily before breakfast",
-};
+const ACCEPT = "application/pdf,image/jpeg,image/png";
 
-export function DocumentsView({ documents: initialDocuments, mode, maxUploadBytes }: DocumentsViewProps) {
-  const [documents, setDocuments] = useState(initialDocuments);
-  const [reviewing, setReviewing] = useState(false);
-  const [fields, setFields] = useState({ ...DEMO_SAMPLE });
+export function DocumentsView(props: DocumentsViewProps) {
+  return props.mode === "demo" ? <DemoDocuments {...props} /> : <LiveDocuments {...props} />;
+}
 
-  const confirmDemoImport = () => {
-    setDocuments((docs) => [
-      {
-        id: `demo-local-${docs.length + 1}`,
-        filename: fields.filename,
-        mimeType: "application/pdf",
-        documentType: "prescription",
-        documentDate: fields.documentDate || null,
-        providerName: fields.provider || null,
-        facilityName: "Care Clinic & Diagnostics",
-        processingStatus: "completed",
-        reviewStatus: "patient_reviewed",
-        uploadedAt: new Date().toISOString(),
-      },
-      ...docs,
-    ]);
-    setReviewing(false);
+// ─── Real-user mode ───────────────────────────────────────────────────────
+
+type Stage = { kind: "idle" } | { kind: "uploading" } | { kind: "processing"; documentId: string } | { kind: "error"; message: string; documentId?: string; retryable?: boolean };
+
+function LiveDocuments({ documents, maxUploadBytes }: DocumentsViewProps) {
+  const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [stage, setStage] = useState<Stage>({ kind: "idle" });
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
+  const maxMb = Math.floor(maxUploadBytes / (1024 * 1024));
+
+  const process = async (documentId: string) => {
+    setStage({ kind: "processing", documentId });
+    const res = await fetch(`/api/documents/${documentId}/process`, { method: "POST" });
+    const body = (await res.json().catch(() => ({}))) as { error?: string; retryable?: boolean };
+    if (res.ok) {
+      router.push(`/documents/${documentId}/review`);
+      return;
+    }
+    setStage({ kind: "error", message: body.error ?? "Processing failed.", documentId, retryable: body.retryable });
+    router.refresh();
   };
+
+  const upload = async (file: File) => {
+    // Client-side checks are for convenience only; the server re-validates everything.
+    if (file.size > maxUploadBytes) {
+      setStage({ kind: "error", message: `The file is larger than ${maxMb} MB.` });
+      return;
+    }
+    if (!ACCEPT.split(",").includes(file.type)) {
+      setStage({ kind: "error", message: "Only PDF, JPEG and PNG files are supported." });
+      return;
+    }
+    setStage({ kind: "uploading" });
+    const form = new FormData();
+    form.set("file", file);
+    const res = await fetch("/api/documents/upload", { method: "POST", body: form });
+    const body = (await res.json().catch(() => ({}))) as { error?: string; document?: { id: string } };
+    if (!res.ok || !body.document) {
+      setStage({ kind: "error", message: body.error ?? "Upload failed." });
+      return;
+    }
+    router.refresh();
+    await process(body.document.id);
+  };
+
+  const remove = (doc: DocumentSummary) => {
+    if (!window.confirm(`Delete "${doc.filename}"? The original file is removed. Records you already confirmed are kept.`)) return;
+    setBusyId(doc.id);
+    startTransition(async () => {
+      const result = await deleteDocumentAction(doc.id);
+      setBusyId(null);
+      if (!result.ok) setStage({ kind: "error", message: result.error });
+      router.refresh();
+    });
+  };
+
+  const busy = stage.kind === "uploading" || stage.kind === "processing";
 
   return (
     <>
@@ -67,97 +104,41 @@ export function DocumentsView({ documents: initialDocuments, mode, maxUploadByte
           </div>
           <div>
             <h2 className="font-semibold text-base">Add a medical document</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              PDF, JPEG or PNG, up to {(maxUploadBytes / (1024 * 1024)).toFixed(0)} MB
-            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">PDF, JPEG or PNG, up to {maxMb} MB. Stored privately; only you can access it.</p>
           </div>
-          {mode === "demo" ? (
-            <div className="space-y-2">
-              <Button onClick={() => setReviewing(true)} disabled={reviewing} className="gap-2">
-                <FlaskConical className="w-4 h-4" aria-hidden="true" />
-                Load sample prescription (simulated)
-              </Button>
-              <p className="text-[11px] text-muted-foreground max-w-md">
-                Demo mode does not accept real files and does not call any AI service. The extracted fields below are
-                pre-written sample output.
-              </p>
-            </div>
-          ) : (
-            <p role="note" className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <Info className="w-4 h-4" aria-hidden="true" />
-              Document upload is not available yet.
-            </p>
-          )}
+          <input
+            ref={inputRef}
+            id="document-file"
+            type="file"
+            accept={ACCEPT}
+            className="sr-only"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) void upload(file);
+            }}
+          />
+          <Button onClick={() => inputRef.current?.click()} disabled={busy} className="gap-2">
+            {busy ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Upload className="w-4 h-4" aria-hidden="true" />}
+            {stage.kind === "uploading" ? "Uploading…" : stage.kind === "processing" ? "Reading the document…" : "Choose a file"}
+          </Button>
+          <div aria-live="polite" className="min-h-5 text-xs">
+            {stage.kind === "processing" && (
+              <span className="text-muted-foreground">Extracting text and details. This can take up to a minute for scanned documents.</span>
+            )}
+            {stage.kind === "error" && (
+              <span role="alert" className="text-destructive flex items-center gap-1.5">
+                <AlertCircle className="w-4 h-4" aria-hidden="true" /> {stage.message}
+                {stage.documentId && stage.retryable && (
+                  <Button size="sm" variant="outline" className="h-7 text-xs ml-2" onClick={() => void process(stage.documentId!)}>
+                    Try again
+                  </Button>
+                )}
+              </span>
+            )}
+          </div>
         </div>
       </Card>
-
-      {mode === "demo" && reviewing && (
-        <Card className="border-health-amber/40">
-          <CardHeader className="bg-health-amber/10 border-b border-health-amber/20 pb-3 flex flex-row items-center justify-between gap-2">
-            <div>
-              <CardTitle className="text-base font-semibold">Review extracted details</CardTitle>
-              <p className="text-xs text-muted-foreground">
-                Check every field against the document. Nothing is added to your records until you confirm.
-              </p>
-            </div>
-            <Badge variant="outline" className="border-health-amber/40 text-health-amber shrink-0">
-              Simulated output
-            </Badge>
-          </CardHeader>
-          <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="rounded-xl border border-border p-4 bg-muted/40 text-xs font-mono space-y-1.5">
-              <p className="font-sans font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Sample document
-              </p>
-              <p className="font-bold">CARE CLINIC &amp; DIAGNOSTICS</p>
-              <p>Date: 09/10/2025 | Rx No: #7821</p>
-              <p>Patient: Ananya Rao</p>
-              <hr className="my-2 border-border" />
-              <p>Rx: Tab Glimepiride 1mg 1-0-0 (B/F)</p>
-              <p>Advice: Monitor blood sugar twice weekly.</p>
-              <p className="text-muted-foreground">Signed: Dr. R. K. Singhal</p>
-            </div>
-            <form
-              className="space-y-4"
-              onSubmit={(e) => {
-                e.preventDefault();
-                confirmDemoImport();
-              }}
-            >
-              {(
-                [
-                  ["documentDate", "Document date", "date"],
-                  ["provider", "Doctor / provider", "text"],
-                  ["medication", "Medication", "text"],
-                  ["instructions", "Dosage & instructions", "text"],
-                ] as const
-              ).map(([key, label, type]) => (
-                <div key={key} className="space-y-1.5">
-                  <Label htmlFor={`review-${key}`} className="text-xs font-medium">{label}</Label>
-                  <Input
-                    id={`review-${key}`}
-                    type={type}
-                    value={fields[key]}
-                    onChange={(e) => setFields((f) => ({ ...f, [key]: e.target.value }))}
-                    className="h-9 text-sm"
-                  />
-                </div>
-              ))}
-              <div className="pt-2 flex gap-3">
-                <Button type="submit" className="flex-1 gap-1.5">
-                  <CheckCircle2 className="w-4 h-4" aria-hidden="true" /> Confirm
-                </Button>
-                <Button type="button" variant="outline" onClick={() => setReviewing(false)} className="gap-1.5">
-                  <Trash2 className="w-4 h-4" aria-hidden="true" /> Cancel import
-                </Button>
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                Demo only: confirmed samples are kept in this browser tab and disappear on reload.
-              </p>
-            </form>
-          </CardContent>
-        </Card>
-      )}
 
       <Card className="border-border/80">
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
@@ -169,39 +150,157 @@ export function DocumentsView({ documents: initialDocuments, mode, maxUploadByte
             <p className="p-6 text-sm text-muted-foreground text-center">No documents yet.</p>
           ) : (
             <ul className="divide-y divide-border">
-              {documents.map((doc) => (
-                <li key={doc.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="p-2.5 rounded-xl bg-primary/10 text-primary shrink-0">
-                      <FileText className="w-5 h-5" aria-hidden="true" />
+              {documents.map((doc) => {
+                const awaitingReview = doc.processingStatus === "completed" && doc.reviewStatus === "pending_review" && !doc.cancelled;
+                const canProcess = (doc.processingStatus === "pending" || doc.processingStatus === "failed") && doc.reviewStatus === "pending_review" && !doc.cancelled;
+                return (
+                  <li key={doc.id} className="p-4 space-y-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <DocumentLine doc={doc} />
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        {doc.cancelled ? (
+                          <Badge variant="outline">Import cancelled</Badge>
+                        ) : (
+                          <Badge variant="outline" className={doc.processingStatus === "failed" ? "text-destructive border-destructive/30" : ""}>
+                            {PROCESSING_LABEL[doc.processingStatus]}
+                          </Badge>
+                        )}
+                        <VerificationBadge status={doc.reviewStatus} />
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <h3 className="text-sm font-semibold truncate">{doc.filename}</h3>
-                      <p className="text-xs text-muted-foreground">
-                        {[
-                          doc.documentType ? humanize(doc.documentType) : "Type unknown",
-                          `Document date: ${formatDate(doc.documentDate)}`,
-                          `Uploaded: ${formatDate(doc.uploadedAt)}`,
-                          doc.providerName,
-                        ]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </p>
+                    {doc.processingError && !doc.cancelled && <p className="text-xs text-destructive">{doc.processingError}</p>}
+                    <div className="flex flex-wrap gap-2">
+                      {awaitingReview && (
+                        <Link href={`/documents/${doc.id}/review`}>
+                          <Button size="sm" className="h-8 text-xs gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /> Review extracted details
+                          </Button>
+                        </Link>
+                      )}
+                      {canProcess && (
+                        <Button size="sm" variant="outline" className="h-8 text-xs gap-1" disabled={busy} onClick={() => void process(doc.id)}>
+                          <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" /> {doc.processingStatus === "failed" ? "Retry" : "Process"}
+                        </Button>
+                      )}
+                      <a href={`/api/documents/${doc.id}/file`} target="_blank" rel="noreferrer">
+                        <Button size="sm" variant="ghost" className="h-8 text-xs gap-1">
+                          <Eye className="w-3.5 h-3.5" aria-hidden="true" /> View original
+                        </Button>
+                      </a>
+                      <Button size="sm" variant="ghost" className="h-8 text-xs gap-1 text-destructive" disabled={busyId === doc.id} onClick={() => remove(doc)}>
+                        <Trash2 className="w-3.5 h-3.5" aria-hidden="true" /> Delete
+                      </Button>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Badge
-                      variant="outline"
-                      className={doc.processingStatus === "failed" ? "text-destructive border-destructive/30" : ""}
-                    >
-                      {PROCESSING_LABEL[doc.processingStatus]}
-                    </Badge>
-                    <VerificationBadge status={doc.reviewStatus} />
-                  </div>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           )}
+        </CardContent>
+      </Card>
+    </>
+  );
+}
+
+function DocumentLine({ doc }: { doc: DocumentSummary }) {
+  return (
+    <div className="flex items-center gap-3 min-w-0">
+      <div className="p-2.5 rounded-xl bg-primary/10 text-primary shrink-0">
+        <FileText className="w-5 h-5" aria-hidden="true" />
+      </div>
+      <div className="min-w-0">
+        <h3 className="text-sm font-semibold truncate">{doc.filename}</h3>
+        <p className="text-xs text-muted-foreground">
+          {[
+            doc.documentType ? humanize(doc.documentType) : "Type unknown",
+            `Document date: ${formatDate(doc.documentDate)}`,
+            `Uploaded: ${formatDate(doc.uploadedAt)}`,
+            doc.pageCount ? `${doc.pageCount} page${doc.pageCount === 1 ? "" : "s"}` : null,
+            doc.providerName,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Demo mode ────────────────────────────────────────────────────────────
+
+function DemoDocuments({ documents, demoSamples }: DocumentsViewProps) {
+  const [review, setReview] = useState<ReviewPayload | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  const load = (id: string) =>
+    startTransition(async () => {
+      setMessage(null);
+      const result = await runDemoSampleAction(id);
+      if (result.ok) setReview(result.review);
+      else setMessage(result.error);
+    });
+
+  return (
+    <>
+      {!review && (
+        <Card className="border-dashed border-2 p-6">
+          <div className="flex flex-col items-center text-center space-y-3">
+            <div className="p-4 rounded-2xl bg-primary/10 text-primary">
+              <FlaskConical className="w-8 h-8" aria-hidden="true" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-base">Try the import workflow with a sample</h2>
+              <p className="text-xs text-muted-foreground mt-0.5 max-w-md">
+                Demo mode does not accept real files and does not call any AI service. The samples are fictional, and their
+                extraction output is simulated, including deliberate mistakes for you to catch during review.
+              </p>
+            </div>
+            <div className="flex flex-wrap justify-center gap-2">
+              {demoSamples.map((s) => (
+                <Button key={s.id} variant="outline" disabled={pending} onClick={() => load(s.id)} className="text-xs">
+                  {s.title}
+                </Button>
+              ))}
+            </div>
+            {message && (
+              <p role="status" className="text-xs text-muted-foreground">
+                {message}
+              </p>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {review && (
+        <ReviewForm
+          review={review}
+          onConfirm={async () => {
+            setReview(null);
+            setMessage("Demo only: the reviewed sample was not saved. In real-user mode it would now appear in your records.");
+            return { ok: true };
+          }}
+          onCancel={() => {
+            setReview(null);
+            setMessage("Import cancelled. Nothing was saved.");
+          }}
+        />
+      )}
+
+      <Card className="border-border/80">
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+          <CardTitle className="text-base font-semibold">Your documents</CardTitle>
+          <span className="text-xs text-muted-foreground">{documents.length} files</span>
+        </CardHeader>
+        <CardContent className="p-0">
+          <ul className="divide-y divide-border">
+            {documents.map((doc) => (
+              <li key={doc.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <DocumentLine doc={doc} />
+                <VerificationBadge status={doc.reviewStatus} />
+              </li>
+            ))}
+          </ul>
         </CardContent>
       </Card>
     </>

@@ -90,7 +90,19 @@ describe("parseConfig", () => {
   });
 
   it("does not enable OCR unless both the flag and a provider are set", () => {
-    expect(parseConfig({ ...live, OCR_ENABLED: "true" }).ocr.enabled).toBe(false);
-    expect(parseConfig({ ...live, OCR_ENABLED: "true", OCR_PROVIDER: "paddleocr" }).ocr.enabled).toBe(true);
+    const ocr = { OCR_SERVICE_URL: "http://127.0.0.1:8001", OCR_SERVICE_TOKEN: TEST_SECRET };
+    expect(parseConfig({ ...live, ...ocr, OCR_ENABLED: "true" }).ocr.enabled).toBe(false);
+    expect(parseConfig({ ...live, ...ocr, OCR_ENABLED: "true", OCR_PROVIDER: "paddleocr" }).ocr.enabled).toBe(true);
+  });
+
+  it("requires the OCR service URL and a strong shared token when OCR is enabled", () => {
+    const base = { ...live, OCR_ENABLED: "true", OCR_PROVIDER: "paddleocr" };
+    expect(problemsOf(base)).toEqual([
+      expect.stringContaining("OCR_SERVICE_URL"),
+      expect.stringContaining("OCR_SERVICE_TOKEN"),
+    ]);
+    expect(problemsOf({ ...base, OCR_SERVICE_URL: "http://127.0.0.1:8001", OCR_SERVICE_TOKEN: "short" })).toContainEqual(
+      expect.stringContaining("OCR_SERVICE_TOKEN")
+    );
   });
 });

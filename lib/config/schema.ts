@@ -32,6 +32,8 @@ export interface AppConfig {
     enabled: boolean;
     provider: "paddleocr" | "none";
     serviceUrl: string | null;
+    /** Shared secret sent to the OCR service. Never exposed to the client. */
+    serviceToken: string | null;
   };
   upload: { maxBytes: number };
 }
@@ -68,6 +70,7 @@ const rawEnvSchema = z.object({
   OCR_ENABLED: optionalBoolean,
   OCR_PROVIDER: optionalString,
   OCR_SERVICE_URL: optionalString,
+  OCR_SERVICE_TOKEN: optionalString,
   MAX_UPLOAD_SIZE_MB: optionalString,
 });
 
@@ -151,6 +154,13 @@ export function parseConfig(env: Record<string, string | undefined>): AppConfig 
   if (raw.OCR_SERVICE_URL && !isHttpUrl(raw.OCR_SERVICE_URL)) {
     problems.push("OCR_SERVICE_URL must be an http(s) URL.");
   }
+  const ocrEnabled = raw.OCR_ENABLED === "true" && ocrProvider !== "none";
+  if (ocrEnabled && mode === "live") {
+    if (!raw.OCR_SERVICE_URL) problems.push("OCR is enabled: set OCR_SERVICE_URL (or set OCR_ENABLED=false).");
+    if (!raw.OCR_SERVICE_TOKEN || raw.OCR_SERVICE_TOKEN.length < MIN_SECRET_LENGTH) {
+      problems.push(`OCR is enabled: set OCR_SERVICE_TOKEN to ${MIN_SECRET_LENGTH}+ random characters (same value as the OCR service).`);
+    }
+  }
 
   let maxUploadMb = MAX_UPLOAD_MB;
   if (raw.MAX_UPLOAD_SIZE_MB !== undefined) {
@@ -176,9 +186,10 @@ export function parseConfig(env: Record<string, string | undefined>): AppConfig 
       configured: provider !== "none" && Boolean(aiKey) && Boolean(aiModel),
     },
     ocr: {
-      enabled: raw.OCR_ENABLED === "true" && ocrProvider !== "none",
+      enabled: ocrEnabled,
       provider: ocrProvider,
       serviceUrl: raw.OCR_SERVICE_URL ?? null,
+      serviceToken: raw.OCR_SERVICE_TOKEN ?? null,
     },
     upload: { maxBytes: Math.floor(maxUploadMb * 1024 * 1024) },
   };

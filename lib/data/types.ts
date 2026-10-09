@@ -37,7 +37,12 @@ export interface DocumentSummary {
   providerName: string | null;
   facilityName: string | null;
   processingStatus: ProcessingStatus;
+  /** Patient-facing reason when processing failed. Never contains document text. */
+  processingError: string | null;
   reviewStatus: ReviewStatus;
+  /** The patient cancelled the import; the original file is kept until deleted. */
+  cancelled: boolean;
+  pageCount: number | null;
   uploadedAt: string | null;
 }
 

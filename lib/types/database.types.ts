@@ -840,6 +840,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      // TEMPORARY hand-written until migration 006 is applied and types are regenerated.
+      claim_document_for_processing: {
+        Args: { p_document_id: string }
+        Returns: Database["public"]["Tables"]["documents"]["Row"][]
+      }
+      confirm_extraction: {
+        Args: { p_extraction_id: string; p_review: Json }
+        Returns: string
+      }
       record_audit_event: {
         Args: {
           p_details?: Json

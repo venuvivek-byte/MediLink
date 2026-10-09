@@ -1,67 +1,53 @@
+import "server-only";
 import OpenAI from "openai";
-import { ExtractionResult, ExtractionSchema } from "../schema";
+import { extractionJsonSchema } from "../extraction-schema";
+import { buildUserPrompt, SYSTEM_INSTRUCTION } from "../prompt";
+import { classifyHttpStatus, ProviderError, type ExtractionProvider, type ExtractionRequest } from "./types";
 
-export class OpenAIExtractionProvider {
-  private client: OpenAI | null = null;
+/**
+ * OpenAI alternative behind the same interface. Covered by unit tests with a
+ * mocked client only; not verified against the live API (no key configured).
+ */
+export class OpenAIExtractionProvider implements ExtractionProvider {
+  readonly name = "openai" as const;
+  readonly isSimulated = false;
+  private readonly client: OpenAI;
 
-  constructor() {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (apiKey) {
-      this.client = new OpenAI({ apiKey });
-    }
+  constructor(
+    apiKey: string,
+    readonly model: string
+  ) {
+    this.client = new OpenAI({ apiKey });
   }
 
-  async extract(
-    fileBuffer: Buffer,
-    mimeType: string,
-    documentTypeHint: string
-  ): Promise<ExtractionResult> {
-    if (!this.client) {
-      throw new Error("OPENAI_API_KEY is not configured.");
-    }
-
-    const base64Data = fileBuffer.toString("base64");
-    const dataUrl = `data:${mimeType};base64,${base64Data}`;
-
-    const response = await this.client.chat.completions.create({
-      model: "gpt-4o",
-      response_format: { type: "json_object" },
-      messages: [
+  async extract({ pages, signal }: ExtractionRequest): Promise<unknown> {
+    let text: string | null | undefined;
+    try {
+      const response = await this.client.chat.completions.create(
         {
-          role: "system",
-          content: `You are an expert medical records analysis AI. Extract document clinical data into structured JSON matching this schema:
-document_type ('prescription' | 'lab_report' | 'discharge_summary' | 'other'),
-document_date (YYYY-MM-DD string or null),
-provider_name (string or null),
-facility_name (string or null),
-diagnoses: [{ name: string, confidence: number }],
-medications: [{ name: string, strength: string | null, dosage: string | null, frequency: string | null, route: string | null, duration: string | null, confidence: number }],
-lab_results: [{ test_name: string, value: string, unit: string | null, reference_range: string | null, is_abnormal: boolean | null, confidence: number }],
-allergies: [{ substance: string, reaction: string | null }],
-raw_confidence: number (0.0 to 1.0)`,
-        },
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `Analyze this medical document (${documentTypeHint}) and output structured JSON.`,
-            },
-            {
-              type: "image_url",
-              image_url: { url: dataUrl },
-            },
+          model: this.model,
+          temperature: 0,
+          messages: [
+            { role: "system", content: SYSTEM_INSTRUCTION },
+            { role: "user", content: buildUserPrompt(pages) },
           ],
+          response_format: {
+            type: "json_schema",
+            json_schema: { name: "medical_document_extraction", schema: extractionJsonSchema(), strict: false },
+          },
         },
-      ],
-    });
-
-    const content = response.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error("No response from OpenAI extraction.");
+        { signal }
+      );
+      text = response.choices[0]?.message?.content;
+    } catch (error) {
+      const status = (error as { status?: number }).status;
+      throw new ProviderError(classifyHttpStatus(status), "OpenAI request failed", status);
     }
-
-    const parsed = JSON.parse(content);
-    return ExtractionSchema.parse(parsed);
+    if (!text) throw new ProviderError("invalid_output", "OpenAI returned no content");
+    try {
+      return JSON.parse(text);
+    } catch {
+      throw new ProviderError("invalid_output", "OpenAI returned non-JSON output");
+    }
   }
 }

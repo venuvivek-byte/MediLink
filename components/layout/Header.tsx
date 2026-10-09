@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Upload, Bell, Menu, Settings, LogOut, User } from "lucide-react";
 import { DEMO_PATIENT } from "@/lib/demo/data";
+import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
 interface HeaderProps {
@@ -21,12 +23,27 @@ interface HeaderProps {
 }
 
 export default function Header({ title, subtitle, onMenuToggle }: HeaderProps) {
+  const router = useRouter();
   const patient = DEMO_PATIENT;
   const initials = patient.display_name
     .split(" ")
     .map((n) => n[0])
     .join("")
     .toUpperCase();
+
+  const handleSignOut = async () => {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    } catch (e) {
+      // ignore
+    }
+    await fetch("/api/auth/signout", { method: "POST" });
+    // Also clear cookie on client
+    document.cookie = "patient_session=; path=/; max-age=0";
+    router.push("/login");
+    router.refresh();
+  };
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between gap-4 px-4 md:px-8 h-16 border-b border-border bg-background/80 backdrop-blur-xl">
@@ -102,7 +119,11 @@ export default function Header({ title, subtitle, onMenuToggle }: HeaderProps) {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive">
+            <DropdownMenuItem
+              variant="destructive"
+              className="cursor-pointer"
+              onClick={handleSignOut}
+            >
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out
             </DropdownMenuItem>

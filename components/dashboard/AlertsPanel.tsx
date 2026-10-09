@@ -1,90 +1,66 @@
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { AlertCircle, AlertTriangle, Repeat, ArrowRight } from "lucide-react";
-import { getDemoDuplicateAlerts, getDemoRepeatTestAlerts } from "@/lib/demo/data";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { AlertCircle, ArrowRight, Repeat } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { DuplicateMedicationAlert, RepeatTestAlert } from "@/lib/domain/insights";
+import { formatDate } from "@/lib/format";
 
-export function AlertsPanel() {
-  const duplicateAlerts = getDemoDuplicateAlerts();
-  const repeatAlerts = getDemoRepeatTestAlerts();
+interface AlertsPanelProps {
+  duplicates: DuplicateMedicationAlert[];
+  repeats: RepeatTestAlert[];
+}
 
-  const totalAlerts = duplicateAlerts.length + repeatAlerts.length;
+export function AlertsPanel({ duplicates, repeats }: AlertsPanelProps) {
+  const total = duplicates.length + repeats.length;
 
   return (
-    <Card className="border-health-amber/30 bg-card/60 backdrop-blur-sm overflow-hidden">
-      <CardHeader className="bg-health-amber/10 pb-3 flex flex-row items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-health-amber/20 text-health-amber">
-            <AlertTriangle className="w-4 h-4" />
-          </div>
-          <div>
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              Clinical & Medication Alerts
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-health-amber/20 text-health-amber">
-                {totalAlerts} Active
-              </span>
-            </CardTitle>
-            <p className="text-xs text-muted-foreground">
-              Cross-record anomalies flagged for your clinical review
-            </p>
-          </div>
-        </div>
+    <Card className="border-border/80">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-semibold">
+          Records to double-check {total > 0 && <span className="text-muted-foreground font-normal">({total})</span>}
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">
+          Flagged by simple matching rules. A flag is not proof of an error; check with your doctor or pharmacist.
+        </p>
       </CardHeader>
-      <CardContent className="p-4 space-y-3">
-        {duplicateAlerts.map((alert, i) => (
-          <div
-            key={i}
-            className="flex items-start gap-3 p-3 rounded-xl border border-health-amber/30 bg-health-amber/5 text-sm"
-          >
-            <AlertCircle className="w-5 h-5 text-health-amber shrink-0 mt-0.5" />
-            <div className="flex-1 space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-foreground text-xs">
-                  {alert.title}
-                </span>
-                <span className="text-[10px] font-medium text-health-amber bg-health-amber/15 px-2 py-0.5 rounded">
-                  Duplicate Warning
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {alert.message}
-              </p>
-              <div className="pt-1 flex gap-2">
-                <Link href="/medications">
-                  <Button variant="ghost" size="sm" className="h-7 text-xs text-primary gap-1 px-2">
-                    Review in Medications <ArrowRight className="w-3 h-3" />
-                  </Button>
-                </Link>
-              </div>
+      <CardContent className="space-y-3">
+        {total === 0 && <p className="text-xs text-muted-foreground">No possible duplicates found.</p>}
+
+        {duplicates.map((alert) => (
+          <div key={`dup-${alert.key}`} className="flex items-start gap-3 p-3 rounded-xl border border-health-amber/40 bg-health-amber/5">
+            <AlertCircle className="w-5 h-5 text-health-amber shrink-0 mt-0.5" aria-hidden="true" />
+            <div className="flex-1 space-y-1.5 min-w-0">
+              <p className="font-semibold text-xs">Possible duplicate medication: {alert.displayName}</p>
+              <p className="text-xs text-muted-foreground">{alert.reason}</p>
+              <ul className="text-xs space-y-0.5">
+                {alert.records.map((m) => (
+                  <li key={m.id}>
+                    {m.name}
+                    {m.frequency ? `, ${m.frequency}` : ""} · from {formatDate(m.startDate)}
+                    {m.prescriberName ? ` · ${m.prescriberName}` : ""}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/medications" className="inline-flex items-center gap-1 text-xs text-primary font-medium hover:underline">
+                Review medications <ArrowRight className="w-3 h-3" aria-hidden="true" />
+              </Link>
             </div>
           </div>
         ))}
 
-        {repeatAlerts.map((alert, i) => (
-          <div
-            key={i}
-            className="flex items-start gap-3 p-3 rounded-xl border border-primary/25 bg-primary/5 text-sm"
-          >
-            <Repeat className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-            <div className="flex-1 space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-foreground text-xs">
-                  {alert.title}
-                </span>
-                <span className="text-[10px] font-medium text-primary bg-primary/15 px-2 py-0.5 rounded">
-                  Lab Test Interval
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {alert.message}
+        {repeats.map((alert) => (
+          <div key={`rep-${alert.key}-${alert.later.id}`} className="flex items-start gap-3 p-3 rounded-xl border border-border bg-muted/30">
+            <Repeat className="w-5 h-5 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+            <div className="flex-1 space-y-1.5 min-w-0">
+              <p className="font-semibold text-xs">
+                {alert.testName} recorded {alert.daysApart} days apart
               </p>
-              <div className="pt-1">
-                <Link href="/lab-results">
-                  <Button variant="ghost" size="sm" className="h-7 text-xs text-primary gap-1 px-2">
-                    View Lab Trends <ArrowRight className="w-3 h-3" />
-                  </Button>
-                </Link>
-              </div>
+              <p className="text-xs text-muted-foreground">
+                {formatDate(alert.earlier.testDate)} and {formatDate(alert.later.testDate)}. Repeat testing is often
+                intentional; ask your doctor if you are unsure why it was repeated.
+              </p>
+              <Link href="/lab-results" className="inline-flex items-center gap-1 text-xs text-primary font-medium hover:underline">
+                View lab results <ArrowRight className="w-3 h-3" aria-hidden="true" />
+              </Link>
             </div>
           </div>
         ))}

@@ -1,35 +1,24 @@
-import { NextRequest, NextResponse } from "next/server";
-import { extractMedicalDocument } from "@/lib/ai/extraction";
+import { NextResponse } from "next/server";
+import { getSession } from "@/lib/auth/session";
+import { getConfig } from "@/lib/config/env";
 
-export async function POST(request: NextRequest) {
-  try {
-    const formData = await request.formData();
-    const file = formData.get("file") as File | null;
-    const documentType = (formData.get("documentType") as any) || "prescription";
+// PHASE 1 STATUS: authenticated, but processing is intentionally disabled.
+// The validated pipeline (magic-byte checks, private storage, PDF text
+// layer, OCR, schema-validated AI extraction, patient review) lands in
+// Phase 3. Until then this endpoint never forwards files anywhere and never
+// returns fabricated extraction output.
+export async function POST() {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Sign in to upload documents." }, { status: 401 });
+  }
 
-    if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
-    }
-
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    // Call extraction pipeline
-    const extraction = await extractMedicalDocument(buffer, file.type, documentType);
-
-    return NextResponse.json({
-      success: true,
-      document: {
-        filename: file.name,
-        size: file.size,
-        type: file.type,
-      },
-      extraction,
-    });
-  } catch (error: any) {
+  if (getConfig().mode === "demo") {
     return NextResponse.json(
-      { error: error.message || "Failed to process document" },
-      { status: 500 }
+      { error: "Demo mode does not accept real files. Use the sample document instead." },
+      { status: 403 }
     );
   }
+
+  return NextResponse.json({ error: "Document upload is not available yet." }, { status: 501 });
 }

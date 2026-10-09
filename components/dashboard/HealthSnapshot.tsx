@@ -1,76 +1,68 @@
+import { Activity, FlaskConical, Pill, ShieldAlert } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Pill, ShieldCheck, Activity, TrendingUp } from "lucide-react";
-import { getDemoStats } from "@/lib/demo/data";
+import type { Allergy, Condition, LabResult, Medication } from "@/lib/data/types";
+import { formatDate } from "@/lib/format";
 
-export function HealthSnapshot() {
-  const stats = getDemoStats();
+interface HealthSnapshotProps {
+  medications: Medication[];
+  allergies: Allergy[];
+  conditions: Condition[];
+  latestLab: LabResult | null;
+}
+
+function listPreview(names: string[]): string {
+  if (names.length === 0) return "None recorded";
+  return names.length <= 2 ? names.join(", ") : `${names.slice(0, 2).join(", ")} +${names.length - 2}`;
+}
+
+export function HealthSnapshot({ medications, allergies, conditions, latestLab }: HealthSnapshotProps) {
+  const current = medications.filter((m) => m.status === "current");
+  const uncertain = medications.filter((m) => m.status === "uncertain");
+  const activeConditions = conditions.filter((c) => c.status === "active");
 
   const cards = [
     {
-      title: "Active Medications",
-      value: stats.activeMedications,
-      subtitle: "Across 3 clinical sources",
+      title: "Current medications",
+      value: String(current.length),
+      subtitle: uncertain.length > 0 ? `${uncertain.length} with uncertain status` : "As recorded in your documents",
       icon: Pill,
-      color: "text-primary",
-      bg: "bg-primary/10",
-      border: "border-primary/20",
     },
     {
-      title: "Known Allergies",
-      value: stats.knownAllergies,
-      subtitle: "Penicillin documented",
-      icon: ShieldCheck,
-      color: "text-health-rose",
-      bg: "bg-health-rose/10",
-      border: "border-health-rose/20",
+      title: "Documented allergies",
+      value: String(allergies.length),
+      subtitle: listPreview(allergies.map((a) => a.substance)),
+      icon: ShieldAlert,
     },
     {
-      title: "Chronic Conditions",
-      value: stats.activeConditions,
-      subtitle: "Type 2 Diabetes, HTN",
+      title: "Active conditions",
+      value: String(activeConditions.length),
+      subtitle: listPreview(activeConditions.map((c) => c.name)),
       icon: Activity,
-      color: "text-health-indigo",
-      bg: "bg-health-indigo/10",
-      border: "border-health-indigo/20",
     },
     {
-      title: "Latest HbA1c",
-      value: stats.latestKeyResult?.value || "7.2%",
-      subtitle: "Down from 7.8% (Improving)",
-      icon: TrendingUp,
-      color: "text-health-emerald",
-      bg: "bg-health-emerald/10",
-      border: "border-health-emerald/20",
-      tag: "Trending Down",
+      title: "Latest lab result",
+      value: latestLab ? `${latestLab.value ?? "—"}${latestLab.unit ? ` ${latestLab.unit}` : ""}` : "—",
+      subtitle: latestLab ? `${latestLab.testName} · ${formatDate(latestLab.testDate)}` : "No lab results yet",
+      icon: FlaskConical,
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <section aria-label="Health snapshot" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {cards.map((c) => (
-        <Card
-          key={c.title}
-          className={`border ${c.border} bg-card/60 backdrop-blur-sm hover:shadow-md transition-all duration-200`}
-        >
-          <CardContent className="p-5 flex items-start justify-between">
-            <div className="space-y-1">
+        <Card key={c.title} className="border-border/80">
+          <CardContent className="p-5 flex items-start justify-between gap-3">
+            <div className="space-y-1 min-w-0">
               <p className="text-xs font-medium text-muted-foreground">{c.title}</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold tracking-tight">{c.value}</span>
-                {c.tag && (
-                  <span className="text-[10px] font-semibold text-health-emerald bg-health-emerald/10 px-1.5 py-0.5 rounded">
-                    {c.tag}
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">{c.subtitle}</p>
+              <p className="text-2xl font-bold tracking-tight truncate">{c.value}</p>
+              <p className="text-xs text-muted-foreground truncate">{c.subtitle}</p>
             </div>
-            <div className={`p-3 rounded-2xl ${c.bg} ${c.color}`}>
-              <c.icon className="w-5 h-5" />
+            <div className="p-3 rounded-2xl bg-primary/10 text-primary shrink-0">
+              <c.icon className="w-5 h-5" aria-hidden="true" />
             </div>
           </CardContent>
         </Card>
       ))}
-    </div>
+    </section>
   );
 }

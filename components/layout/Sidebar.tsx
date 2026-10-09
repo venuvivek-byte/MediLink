@@ -1,40 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import {
-  LayoutDashboard,
-  Clock,
-  FileText,
-  Pill,
-  TestTube,
-  Share2,
-  ShieldAlert,
-  Settings,
-  ClipboardList,
-  Heart,
-  LogOut,
-} from "lucide-react";
+import { Heart, LogOut } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { createClient } from "@/lib/supabase/client";
-
-const navigation = [
-  { name: "Overview", href: "/", icon: LayoutDashboard },
-  { name: "Timeline", href: "/timeline", icon: Clock },
-  { name: "Documents", href: "/documents", icon: FileText },
-  { name: "Medications", href: "/medications", icon: Pill },
-  { name: "Lab Results", href: "/lab-results", icon: TestTube },
-  { name: "Share Records", href: "/share", icon: Share2 },
-  { name: "Emergency", href: "/emergency", icon: ShieldAlert },
-  { name: "Audit Log", href: "/audit", icon: ClipboardList },
-  { name: "Settings", href: "/settings", icon: Settings },
-];
+import { NAVIGATION, isActivePath } from "./nav";
+import { useShell, useSignOut } from "./ShellContext";
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -42,20 +19,8 @@ interface SidebarProps {
 
 export default function Sidebar({ collapsed = false }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
-
-  const handleSignOut = async () => {
-    try {
-      const supabase = createClient();
-      await supabase.auth.signOut();
-    } catch (e) {
-      // ignore
-    }
-    await fetch("/api/auth/signout", { method: "POST" });
-    document.cookie = "patient_session=; path=/; max-age=0";
-    router.push("/login");
-    router.refresh();
-  };
+  const handleSignOut = useSignOut();
+  const { mode } = useShell();
 
   return (
     <aside
@@ -66,16 +31,14 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 h-16 shrink-0">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-health-emerald flex items-center justify-center shadow-md">
-          <Heart className="w-5 h-5 text-white" fill="white" />
+        <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
+          <Heart className="w-5 h-5 text-primary-foreground" aria-hidden="true" />
         </div>
         {!collapsed && (
           <div className="flex flex-col">
-            <span className="font-bold text-[15px] leading-tight text-gradient">
-              Lost in Transit
-            </span>
+            <span className="font-bold text-[15px] leading-tight">MyHealthVault</span>
             <span className="text-[11px] text-muted-foreground leading-tight">
-              Health Records
+              {mode === "demo" ? "Demo mode · fictional data" : "Your health records"}
             </span>
           </div>
         )}
@@ -84,17 +47,15 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
       <Separator className="mx-4 w-auto" />
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {navigation.map((item) => {
-          const isActive =
-            item.href === "/"
-              ? pathname === "/"
-              : pathname.startsWith(item.href);
+      <nav aria-label="Main" className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        {NAVIGATION.map((item) => {
+          const isActive = isActivePath(pathname, item.href);
 
           const linkContent = (
             <Link
               key={item.name}
               href={item.href}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 group relative",
                 isActive

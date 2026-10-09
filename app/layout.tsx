@@ -11,18 +11,13 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Lost in Transit — Your Health, Your Control",
-    template: "%s | Lost in Transit",
+    default: "MyHealthVault",
+    template: "%s | MyHealthVault",
   },
   description:
-    "Patient-controlled health record platform. Upload medical documents, track medications, view lab trends, and share records securely with clinicians.",
-  keywords: [
-    "health records",
-    "medical documents",
-    "patient portal",
-    "medication tracking",
-    "lab results",
-  ],
+    "Patient-controlled medical records: organise documents, medications and lab results, and share them securely with clinicians.",
+  // Private health application: never index any page.
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({
@@ -36,7 +31,13 @@ export default function RootLayout({
       className={`${inter.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-background">
+      <body className="min-h-full flex flex-col bg-background text-foreground">
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-3 focus:py-2 focus:rounded-md focus:bg-primary focus:text-primary-foreground"
+        >
+          Skip to main content
+        </a>
         <TooltipProvider>
           {children}
         </TooltipProvider>

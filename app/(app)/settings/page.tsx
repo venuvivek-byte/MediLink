@@ -1,156 +1,110 @@
-"use client";
-
-import { useState } from "react";
+import { Info, Phone, Server, User } from "lucide-react";
 import Header from "@/components/layout/Header";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { DEMO_PATIENT } from "@/lib/demo/data";
-import { User, Phone, ShieldCheck, Sparkles, Save } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getPatientRepository } from "@/lib/data";
+import { getConfig } from "@/lib/config/env";
+import { formatDate } from "@/lib/format";
 
-export default function SettingsPage() {
-  const patient = DEMO_PATIENT;
-  const [name, setName] = useState(patient.display_name);
-  const [bloodGroup, setBloodGroup] = useState(patient.blood_group);
-  const [contactName, setContactName] = useState(patient.emergency_contact.name);
-  const [contactPhone, setContactPhone] = useState(patient.emergency_contact.phone);
-  const [saved, setSaved] = useState(false);
+export const metadata = { title: "Settings" };
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  };
+export default async function SettingsPage() {
+  const profile = await (await getPatientRepository()).getProfile();
+  const config = getConfig();
+
+  // Reports configuration only. Nothing here claims a service is reachable.
+  const status = [
+    {
+      label: "Data source",
+      value: config.mode === "demo" ? "Demo data (no database)" : "Supabase (configured)",
+    },
+    {
+      label: "AI extraction",
+      value:
+        config.mode === "demo"
+          ? "Simulated in demo mode"
+          : config.ai.configured
+            ? `${config.ai.provider} · ${config.ai.model}`
+            : "Not configured",
+    },
+    {
+      label: "OCR",
+      value: config.ocr.enabled ? `${config.ocr.provider} (enabled in config)` : "Disabled",
+    },
+  ];
+
+  const rows: [string, string][] = profile
+    ? [
+        ["Name", profile.displayName],
+        ["Date of birth", profile.dateOfBirth ? formatDate(profile.dateOfBirth) : "Not recorded"],
+        ["Blood group", profile.bloodGroup ?? "Not recorded"],
+      ]
+    : [];
 
   return (
     <div className="flex-1 flex flex-col">
-      <Header
-        title="Patient Profile & Configurations"
-        subtitle="Manage identity attributes, emergency delegates, and system connections"
-      />
-
+      <Header title="Settings" subtitle="Your profile and how this app is configured" />
       <div className="p-4 md:p-8 space-y-6 max-w-4xl mx-auto w-full">
-        <form onSubmit={handleSave} className="space-y-6">
-          {/* Identity Info */}
-          <Card className="bg-card/70 border-border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <User className="w-4 h-4 text-primary" />
-                Personal Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium">Display Name</Label>
-                  <Input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="text-xs h-9"
-                    required
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium">Date of Birth</Label>
-                  <Input
-                    type="date"
-                    defaultValue={patient.date_of_birth}
-                    className="text-xs h-9"
-                    disabled
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium">Blood Group</Label>
-                  <Input
-                    value={bloodGroup}
-                    onChange={(e) => setBloodGroup(e.target.value)}
-                    className="text-xs h-9"
-                    required
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <p role="note" className="text-xs text-muted-foreground flex items-center gap-1.5">
+          <Info className="w-4 h-4" aria-hidden="true" />
+          Editing your profile is not available yet.
+        </p>
 
-          {/* Emergency Delegate */}
-          <Card className="bg-card/70 border-border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Phone className="w-4 h-4 text-health-rose" />
-                Emergency Contact Delegate
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium">Contact Full Name</Label>
-                  <Input
-                    value={contactName}
-                    onChange={(e) => setContactName(e.target.value)}
-                    className="text-xs h-9"
-                    required
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium">Emergency Phone</Label>
-                  <Input
-                    value={contactPhone}
-                    onChange={(e) => setContactPhone(e.target.value)}
-                    className="text-xs h-9 font-mono"
-                    required
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <Card className="border-border/80">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <User className="w-4 h-4 text-primary" aria-hidden="true" /> Profile
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {profile ? <DefinitionList rows={rows} /> : <p className="text-sm text-muted-foreground">No profile yet.</p>}
+          </CardContent>
+        </Card>
 
-          {/* AI Extraction Provider Status */}
-          <Card className="bg-card/70 border-border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" />
-                AI & OCR Engine Status
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-xs">
-              <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/40">
-                <span>Active Vision Model</span>
-                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
-                  Google Gemini 2.0 Flash
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/40">
-                <span>Local OCR Layer</span>
-                <Badge variant="outline" className="bg-health-emerald/10 text-health-emerald border-health-emerald/30">
-                  PaddleOCR (Enabled)
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/40">
-                <span>Database Connectivity</span>
-                <Badge variant="outline" className="bg-health-emerald/10 text-health-emerald border-health-emerald/30">
-                  Supabase Connected
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="flex items-center justify-between pt-2">
-            {saved && (
-              <span className="text-xs font-semibold text-health-emerald">
-                ✓ Preferences updated successfully
-              </span>
+        <Card className="border-border/80">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Phone className="w-4 h-4 text-primary" aria-hidden="true" /> Emergency contact
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {profile?.emergencyContact ? (
+              <DefinitionList
+                rows={[
+                  ["Name", profile.emergencyContact.name],
+                  ["Relationship", profile.emergencyContact.relationship ?? "Not recorded"],
+                  ["Phone", profile.emergencyContact.phone],
+                ]}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">No emergency contact recorded.</p>
             )}
-            <Button
-              type="submit"
-              className="ml-auto bg-gradient-to-r from-primary to-health-emerald text-xs gap-1.5"
-            >
-              <Save className="w-3.5 h-3.5" /> Save Changes
-            </Button>
-          </div>
-        </form>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/80">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Server className="w-4 h-4 text-primary" aria-hidden="true" /> System configuration
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DefinitionList rows={status.map((s) => [s.label, s.value])} />
+          </CardContent>
+        </Card>
       </div>
     </div>
+  );
+}
+
+function DefinitionList({ rows }: { rows: [string, string][] }) {
+  return (
+    <dl className="divide-y divide-border text-sm">
+      {rows.map(([label, value]) => (
+        <div key={label} className="flex justify-between gap-4 py-2">
+          <dt className="text-muted-foreground">{label}</dt>
+          <dd className="font-medium text-right">{value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }

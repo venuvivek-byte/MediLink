@@ -1,10 +1,21 @@
 // ============================================================================
-// Lost in Transit — Demo Data (Fictional Patient: Ananya Rao)
+// MyHealthVault — Demo Data (Fictional Patient: Ananya Rao)
 // ============================================================================
 // All data is entirely fictional. No real patient data is used.
+// Rows are typed against the real database row types so that demo mode and
+// real-user mode go through the same mappers in lib/data/mappers.ts.
 
-export const DEMO_PATIENT = {
-  user_id: "demo-user-00000-00000-00000-000001",
+import type { Tables } from "@/lib/types/database.types";
+
+export const DEMO_PATIENT_ID = "demo-user-00000-00000-00000-000001";
+
+/** Public demo-only credentials. They grant access to fictional data only. */
+export const DEMO_SHARE_TOKEN = "demo-clinician-share-token";
+export const DEMO_SHARE_PIN = "482910";
+export const DEMO_EMERGENCY_TOKEN = "demo-emergency-token";
+
+export const DEMO_PATIENT: Tables<"profiles"> = {
+  user_id: DEMO_PATIENT_ID,
   display_name: "Ananya Rao",
   date_of_birth: "1973-03-15",
   blood_group: "B+",
@@ -22,7 +33,7 @@ export const DEMO_PATIENT = {
   updated_at: "2025-10-01T14:30:00Z",
 };
 
-export const DEMO_CONDITIONS = [
+export const DEMO_CONDITIONS: Tables<"conditions">[] = [
   {
     id: "cond-001",
     patient_id: DEMO_PATIENT.user_id,
@@ -45,7 +56,7 @@ export const DEMO_CONDITIONS = [
   },
 ];
 
-export const DEMO_ALLERGIES = [
+export const DEMO_ALLERGIES: Tables<"allergies">[] = [
   {
     id: "allergy-001",
     patient_id: DEMO_PATIENT.user_id,
@@ -58,7 +69,7 @@ export const DEMO_ALLERGIES = [
   },
 ];
 
-export const DEMO_MEDICATIONS = [
+export const DEMO_MEDICATIONS: Tables<"medications">[] = [
   {
     id: "med-001",
     patient_id: DEMO_PATIENT.user_id,
@@ -128,12 +139,12 @@ export const DEMO_MEDICATIONS = [
     end_date: null,
     status: "active",
     verification_status: "verified",
-    metadata: { is_demo: true, provider: "Dr. Shalini Iyer", facility: "Fortis Hospital", duplicate_alert: true },
+    metadata: { is_demo: true, provider: "Dr. Shalini Iyer", facility: "Fortis Hospital" },
     created_at: "2025-09-10T14:00:00Z",
   },
 ];
 
-export const DEMO_LAB_RESULTS = [
+export const DEMO_LAB_RESULTS: Tables<"lab_results">[] = [
   {
     id: "lab-001",
     patient_id: DEMO_PATIENT.user_id,
@@ -226,7 +237,7 @@ export const DEMO_LAB_RESULTS = [
   },
 ];
 
-export const DEMO_DOCUMENTS = [
+export const DEMO_DOCUMENTS: Tables<"documents">[] = [
   {
     id: "doc-001",
     patient_id: DEMO_PATIENT.user_id,
@@ -304,7 +315,7 @@ export const DEMO_DOCUMENTS = [
   },
 ];
 
-export const DEMO_MEDICAL_EVENTS = [
+export const DEMO_MEDICAL_EVENTS: Tables<"medical_events">[] = [
   {
     id: "evt-001",
     patient_id: DEMO_PATIENT.user_id,
@@ -325,7 +336,7 @@ export const DEMO_MEDICAL_EVENTS = [
     event_type: "lab",
     event_date: "2025-01-20",
     title: "Lab Results — HbA1c 7.8%",
-    summary: "HbA1c at 7.8% (above target). Baseline measurement for diabetes management.",
+    summary: "HbA1c recorded as 7.8%. Report reference range: <5.7%.",
     verification_status: "verified",
     structured_data: { lab: "SRL Diagnostics", key_result: "HbA1c 7.8%" },
     metadata: { is_demo: true },
@@ -351,7 +362,7 @@ export const DEMO_MEDICAL_EVENTS = [
     event_type: "lab",
     event_date: "2025-04-18",
     title: "Lab Results — HbA1c 7.4%",
-    summary: "HbA1c improved to 7.4%. Trend shows positive response to Metformin therapy.",
+    summary: "HbA1c recorded as 7.4%. Report reference range: <5.7%.",
     verification_status: "verified",
     structured_data: { lab: "SRL Diagnostics", key_result: "HbA1c 7.4%" },
     metadata: { is_demo: true },
@@ -363,8 +374,8 @@ export const DEMO_MEDICAL_EVENTS = [
     document_id: "doc-005",
     event_type: "lab",
     event_date: "2025-07-15",
-    title: "Lab Results — HbA1c 7.2%, Full Panel",
-    summary: "HbA1c further improved to 7.2%. TSH, RBS, and Creatinine tested. RBS slightly elevated at 142 mg/dL.",
+    title: "Lab Results — HbA1c, TSH, RBS, Creatinine",
+    summary: "HbA1c 7.2%, TSH 2.1 mIU/L, random blood sugar 142 mg/dL and serum creatinine 0.9 mg/dL recorded.",
     verification_status: "verified",
     structured_data: { lab: "Thyrocare Technologies", key_result: "HbA1c 7.2%" },
     metadata: { is_demo: true },
@@ -377,15 +388,15 @@ export const DEMO_MEDICAL_EVENTS = [
     event_type: "prescription",
     event_date: "2025-09-10",
     title: "Prescription — Fortis Hospital",
-    summary: "Dr. Shalini Iyer prescribed Metformin 1000mg OD. ⚠ Possible duplicate with existing Metformin 500mg BD.",
+    summary: "Dr. Shalini Iyer prescribed Metformin 1000mg OD.",
     verification_status: "verified",
-    structured_data: { provider: "Dr. Shalini Iyer", facility: "Fortis Hospital", alert: "duplicate_medication" },
+    structured_data: { provider: "Dr. Shalini Iyer", facility: "Fortis Hospital" },
     metadata: { is_demo: true },
     created_at: "2025-09-10T14:30:00Z",
   },
 ];
 
-export const DEMO_SHARES = [
+const DEMO_SHARE_ROWS: Tables<"record_shares">[] = [
   {
     id: "share-001",
     patient_id: DEMO_PATIENT.user_id,
@@ -398,7 +409,7 @@ export const DEMO_SHARES = [
     },
     date_range_start: null,
     date_range_end: null,
-    expires_at: "2025-11-09T18:00:00Z",
+    expires_at: "", // set by demoShares(): rolling, so the demo link stays usable
     revoked_at: null,
     metadata: { is_demo: true, label: "Dr. Mehta — Full Records" },
     created_at: "2025-10-10T10:00:00Z",
@@ -422,7 +433,16 @@ export const DEMO_SHARES = [
   },
 ];
 
-export const DEMO_AUDIT_LOGS = [
+/**
+ * Demo share rows. The active link expires 30 days after `now`; this is a
+ * function (not a module constant) so the clock is read at request time.
+ */
+export function demoShares(now: Date = new Date()): Tables<"record_shares">[] {
+  const rollingExpiry = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  return DEMO_SHARE_ROWS.map((row) => (row.expires_at ? row : { ...row, expires_at: rollingExpiry }));
+}
+
+export const DEMO_AUDIT_LOGS: Tables<"audit_logs">[] = [
   {
     id: "audit-001",
     patient_id: DEMO_PATIENT.user_id,
@@ -487,112 +507,3 @@ export const DEMO_AUDIT_LOGS = [
     created_at: "2025-07-17T09:30:00Z",
   },
 ];
-
-// ─── Derived / Computed demo data ────────────────────────────────────────────
-
-export function getDemoDuplicateAlerts() {
-  const nameGroups = new Map<string, typeof DEMO_MEDICATIONS>();
-  DEMO_MEDICATIONS.forEach((med) => {
-    const key = med.normalized_name;
-    if (!nameGroups.has(key)) nameGroups.set(key, []);
-    nameGroups.get(key)!.push(med);
-  });
-
-  return Array.from(nameGroups.entries())
-    .filter(([, meds]) => meds.length > 1)
-    .map(([name, meds]) => ({
-      type: "duplicate_medication" as const,
-      severity: "warning" as const,
-      title: `Possible duplicate: ${name.charAt(0).toUpperCase() + name.slice(1)} found in ${meds.length} records`,
-      medications: meds,
-      message: `${meds.map((m) => `${m.name} (${m.frequency})`).join(" and ")} — from different providers. Please verify with your doctor.`,
-    }));
-}
-
-export function getDemoRepeatTestAlerts() {
-  const testGroups = new Map<string, typeof DEMO_LAB_RESULTS>();
-  DEMO_LAB_RESULTS.forEach((lab) => {
-    const key = lab.normalized_test_name;
-    if (!testGroups.has(key)) testGroups.set(key, []);
-    testGroups.get(key)!.push(lab);
-  });
-
-  const alerts: Array<{
-    type: "repeat_test";
-    severity: "info";
-    title: string;
-    message: string;
-    test_name: string;
-    dates: string[];
-  }> = [];
-
-  testGroups.forEach((results, testName) => {
-    if (results.length < 2) return;
-    const sorted = [...results].sort(
-      (a, b) => new Date(b.test_date).getTime() - new Date(a.test_date).getTime()
-    );
-    const latest = new Date(sorted[0].test_date);
-    const previous = new Date(sorted[1].test_date);
-    const diffDays = (latest.getTime() - previous.getTime()) / (1000 * 60 * 60 * 24);
-
-    if (diffDays < 90) {
-      alerts.push({
-        type: "repeat_test",
-        severity: "info",
-        title: `${sorted[0].test_name} tested ${Math.round(diffDays)} days apart`,
-        message: `${sorted[0].test_name} was tested on ${sorted[1].test_date} and ${sorted[0].test_date} (${Math.round(diffDays)} days apart). This may be a repeat test — consult your doctor if unexpected.`,
-        test_name: testName,
-        dates: sorted.map((r) => r.test_date),
-      });
-    }
-  });
-
-  return alerts;
-}
-
-export function getDemoLabTrends() {
-  const trends = new Map<string, Array<{ date: string; value: number; unit: string }>>();
-
-  DEMO_LAB_RESULTS.forEach((lab) => {
-    const key = lab.normalized_test_name;
-    if (!trends.has(key)) trends.set(key, []);
-    trends.get(key)!.push({
-      date: lab.test_date,
-      value: parseFloat(lab.result_value),
-      unit: lab.unit,
-    });
-  });
-
-  // Sort each trend by date
-  trends.forEach((values) => {
-    values.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  });
-
-  return Object.fromEntries(trends);
-}
-
-export function getDemoStats() {
-  const activeMeds = DEMO_MEDICATIONS.filter((m) => m.status === "active");
-  const conditions = DEMO_CONDITIONS.filter((c) => c.status === "active");
-  const latestLab = [...DEMO_LAB_RESULTS]
-    .filter((l) => l.normalized_test_name === "hba1c")
-    .sort((a, b) => new Date(b.test_date).getTime() - new Date(a.test_date).getTime())[0];
-
-  return {
-    activeMedications: activeMeds.length,
-    knownAllergies: DEMO_ALLERGIES.length,
-    activeConditions: conditions.length,
-    latestKeyResult: latestLab
-      ? {
-          name: latestLab.test_name,
-          value: `${latestLab.result_value}${latestLab.unit}`,
-          is_abnormal: latestLab.is_abnormal,
-          date: latestLab.test_date,
-          trend: "improving",
-        }
-      : null,
-    totalDocuments: DEMO_DOCUMENTS.length,
-    totalProviders: new Set(DEMO_DOCUMENTS.map((d) => d.provider_name)).size,
-    pendingVerification: DEMO_DOCUMENTS.filter((d) => d.verification_status === "unverified").length,
-  };
-}

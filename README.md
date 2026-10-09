@@ -1,74 +1,64 @@
-# MediLink (Lost in Transit) 🏥
+# MyHealthVault
 
-> **Patient-Controlled Health-Record Platform & Unified Clinical Timeline**
+A patient-controlled medical-record app. It turns scattered prescriptions, lab reports and other documents into one organised, reviewable record that the patient can share with clinicians on their own terms.
 
-MediLink is a full-stack HealthTech platform built to solve fragmented medical histories, repeat diagnostic testing, and uncoordinated care.
-
----
-
-## 🌟 Core Features
-
-- **AI Medical Document Extraction**: Ingests prescriptions, lab PDFs, and discharge summaries via Google Gemini 2.0 Flash Vision and local OCR.
-- **Unified Longitudinal Health Timeline**: Chronological clinical events normalized across multiple hospitals, diagnostic labs, and clinics.
-- **Medication Management & Duplicate Detection**: Automatically identifies duplicate prescriptions (e.g. Metformin prescribed across multiple providers).
-- **Biomarker Trends & Repeat Test Alerts**: Interactive Recharts trendlines for HbA1c with interval detection (<90 days repeat alert).
-- **Consent-Scoped Clinician Sharing**: Generate expiring, time-bound share links protected by server-hashed 6-digit PINs (`bcrypt`).
-- **Emergency Medical Card**: Digital paramedic card and QR code for rapid emergency triage.
-- **Tamper-Evident Audit Trail**: Complete audit logging of all uploads, views, shares, and external access events.
-- **Zero-Knowledge Architecture**: Row Level Security (RLS) on all Supabase tables, private storage buckets, and zero plaintext PIN storage.
+MyHealthVault organises information. It does **not** diagnose, prescribe, interpret lab results or check drug interactions.
 
 ---
 
-## 🛠️ Tech Stack
+## Status
 
-- **Framework**: Next.js 14+ (App Router, Turbopack)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS + shadcn/ui
-- **Database & Storage**: Supabase (PostgreSQL with RLS)
-- **AI / Vision**: Google Gemini 2.0 Flash (`@google/generative-ai`) / OpenAI GPT-4o
-- **Visualizations**: Recharts
-- **QR Generator**: `qrcode.react`
-- **Security**: `bcryptjs` + crypto SHA-256 tokens
+The project is being built in phases. This table describes what works **today**.
+
+| Area | Status |
+|---|---|
+| Demo mode (fictional patient, no credentials needed) | ✅ Working |
+| Sign-up / sign-in (Supabase Auth) | ⚠️ Implemented; not yet verified end-to-end with a real account |
+| Server-side session checks on every private page and API route | ✅ Phase 1 |
+| Read-only views: dashboard, timeline, documents, medications, lab results, audit history, settings | ✅ Read through a per-patient data layer |
+| Rule-based duplicate-medication and repeat-test flags | ✅ Basic rules (refined in Phase 4) |
+| Database schema hardening, profile creation, stricter RLS | ⏳ Phase 2 |
+| Document upload, OCR, AI extraction, patient review | ⏳ Phase 3 (the upload API currently returns `501`) |
+| Share links with hashed tokens, bcrypt PINs, rate limiting, revocation | ⏳ Phase 5 (in real-user mode every share link is rejected) |
+| Emergency QR access | ⏳ Phase 5 (demo link only) |
+| Drug-interaction checking | ❌ Not planned without a licensed clinical data source |
 
 ---
 
-## 🚀 Getting Started
+## Getting started
 
-### 1. Clone & Install Dependencies
+### 1. Install
 
 ```bash
-git clone https://github.com/venuvivek-byte/MediLink.git
-cd MediLink
 npm install
 ```
 
-### 2. Configure Environment Variables
-
-Copy the example environment file:
+### 2. Configure
 
 ```bash
 cp .env.example .env.local
 ```
 
-Fill in your Supabase credentials and Gemini API Key:
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-GEMINI_API_KEY=your-gemini-key
-NEXT_PUBLIC_DEMO_MODE=true
-```
+Configuration is validated when the server starts. A missing or invalid setting stops the server with a message that names the variable but never shows its value.
 
-### 3. Database Setup (Supabase CLI)
+- **Demo mode:** leave `DEMO_MODE=true`. Nothing else is required for local development.
+- **Real-user mode:** set `DEMO_MODE=false`, fill in the Supabase variables, and set `SESSION_SECRET`:
+  ```bash
+  node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+  ```
+- `SESSION_SECRET` is also required for **any production deployment**, including a deployed demo.
+- `NEXT_PUBLIC_DEMO_MODE` has been replaced by the server-only `DEMO_MODE`. Startup fails with a rename message if only the old name is set.
 
-MediLink includes the **Supabase CLI** as a project dependency with convenient npm scripts.
+### 3. Database setup (real-user mode only)
+
+The project includes the **Supabase CLI** as a project dependency with convenient npm scripts.
 
 #### Option A: Remote Supabase Project (Recommended)
 1. **Link your Supabase project**:
    ```bash
    npm run supabase -- link --project-ref <your-project-ref>
    ```
-2. **Push database migrations** (`001_initial_schema.sql` and `002_storage.sql`):
+2. **Push database migrations** (all files in `supabase/migrations/`):
    ```bash
    npm run db:push
    ```
@@ -105,14 +95,51 @@ MediLink includes the **Supabase CLI** as a project dependency with convenient n
 
 ---
 
-### 4. Run Locally
+### 4. Run
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open http://localhost:3000.
 
-- **Demo Patient**: Ananya Rao
-- **Clinician Portal PIN**: `482910`
-- **Demo Mode**: Set `NEXT_PUBLIC_DEMO_MODE=true` in `.env.local` to explore the complete feature set without configuring a database.
+In demo mode:
+- Choose **Continue as demo patient** to sign in as the fictional patient Ananya Rao.
+- The demo clinician link is `/share/demo-clinician-share-token` and its PIN is `482910`.
+- The demo emergency link is `/emergency/demo-emergency-token`.
+
+These demo credentials only work when `DEMO_MODE=true`. They only ever show fictional data.
+
+---
+
+## Checks
+
+| Command | What it runs |
+|---|---|
+| `npm run typecheck` | TypeScript (`tsc --noEmit`) |
+| `npm run lint` | ESLint |
+| `npm test` | Vitest unit and route tests (`tests/`) |
+| `npm run build` | Production build |
+| `npm run check` | All of the above, in order |
+
+Tests never read `.env.local`. Each test sets the environment it needs.
+
+---
+
+## Architecture (Phase 1)
+
+- **`proxy.ts`:** optimistic redirects only. It refreshes the Supabase session cookie and sends visitors without a session to `/login`. Public `/share/<token>`, `/emergency/<token>` and `/api/*` are excluded from it.
+- **`lib/auth/session.ts`:** the authoritative session check.
+  - In demo mode it accepts a signed HttpOnly cookie, and only when `DEMO_MODE=true`.
+  - In real-user mode it uses Supabase `getUser()`.
+- **`lib/data/`:** the Data Access Layer. Each repository is bound to one patient when it is created.
+  - The Supabase repository queries through Row Level Security and also filters by `patient_id`.
+  - The demo repository applies the same filtering to in-memory fictional data.
+  - The UI only receives DTOs, never storage paths, token hashes or PIN hashes.
+- **`lib/config/`:** Zod-validated configuration. Demo mode never contacts Supabase or AI providers.
+
+---
+
+## Known dependency advisory
+
+`npm audit` reports 9 "high" findings. All of them come from one advisory in `braces`, a glob-matching library. It is pulled in only by developer tooling (`eslint-config-next` and the `shadcn` CLI), so it cannot be reached from the running app. npm's suggested fixes are major-version downgrades, so they have not been applied.

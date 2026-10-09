@@ -1,30 +1,55 @@
-"use client";
-
+import { Suspense } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import MobileNav from "@/components/layout/MobileNav";
 import DemoModeBanner from "@/components/ui/DemoModeBanner";
+import { ShellProvider } from "@/components/layout/ShellContext";
+import { Skeleton } from "@/components/ui/skeleton";
+import { requireSession } from "@/lib/auth/session";
+import { getPatientRepository } from "@/lib/data";
+import { getPublicConfig } from "@/lib/config/env";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+  // Reading the session is request-time work, so it must sit behind Suspense
+  // (Cache Components). Nothing patient-specific is prerendered.
+  return (
+    <Suspense fallback={<ShellSkeleton />}>
+      <AuthenticatedShell>{children}</AuthenticatedShell>
+    </Suspense>
+  );
+}
+
+async function AuthenticatedShell({ children }: { children: React.ReactNode }) {
+  const session = await requireSession();
+  const profile = await (await getPatientRepository()).getProfile();
+  const { mode } = getPublicConfig();
+  const displayName =
+    profile?.displayName ?? (session.kind === "live" && session.email ? session.email : "Patient");
 
   return (
-    <div className="flex min-h-screen">
-      {/* Desktop sidebar */}
-      <Sidebar />
-
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col md:ml-[260px]">
-        {/* Demo mode banner */}
-        {isDemoMode && <DemoModeBanner />}
-
-        {/* Page content */}
-        <main className="flex-1 pb-20 md:pb-0">
-          {children}
-        </main>
+    <ShellProvider value={{ displayName, bloodGroup: profile?.bloodGroup ?? null, mode }}>
+      <div className="flex min-h-screen">
+        <Sidebar />
+        <div className="flex-1 flex flex-col md:ml-[260px] min-w-0">
+          {mode === "demo" && <DemoModeBanner />}
+          <main id="main" className="flex-1 pb-20 md:pb-0">
+            {children}
+          </main>
+        </div>
+        <MobileNav />
       </div>
+    </ShellProvider>
+  );
+}
 
-      {/* Mobile bottom nav */}
-      <MobileNav />
+function ShellSkeleton() {
+  return (
+    <div className="flex min-h-screen" aria-busy="true" aria-label="Loading">
+      <div className="hidden md:block w-[260px] border-r border-border bg-sidebar" />
+      <div className="flex-1 p-8 space-y-4">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
     </div>
   );
 }

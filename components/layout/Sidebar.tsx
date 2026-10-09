@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -22,6 +22,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { createClient } from "@/lib/supabase/client";
 
 const navigation = [
   { name: "Overview", href: "/", icon: LayoutDashboard },
@@ -41,6 +42,20 @@ interface SidebarProps {
 
 export default function Sidebar({ collapsed = false }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    } catch (e) {
+      // ignore
+    }
+    await fetch("/api/auth/signout", { method: "POST" });
+    document.cookie = "patient_session=; path=/; max-age=0";
+    router.push("/login");
+    router.refresh();
+  };
 
   return (
     <aside
@@ -125,8 +140,9 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
       {/* Bottom section */}
       <div className="px-3 py-4">
         <button
+          onClick={handleSignOut}
           className={cn(
-            "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-200 w-full",
+            "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-200 w-full cursor-pointer",
             collapsed && "justify-center"
           )}
         >

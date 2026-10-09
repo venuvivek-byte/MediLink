@@ -227,11 +227,30 @@ describe("revocation", () => {
 });
 
 describe("audit log", () => {
-  it("patients cannot insert, update or delete audit rows directly", async () => {
+  it("patients may append their own patient events, and nothing else", async () => {
+    // Allowed: own id, patient event type, own document.
+    await db.asUser(a.userId, (tx) =>
+      tx.query("INSERT INTO public.audit_logs (patient_id, document_id, event_type) VALUES ($1, $2, 'document_uploaded')", [
+        a.userId,
+        a.documentId,
+      ])
+    );
+    const rejected: [string, string, unknown[]][] = [
+      ["for another patient", "INSERT INTO public.audit_logs (patient_id, event_type) VALUES ($1, 'share_created')", [b.userId]],
+      ["a clinician access event", "INSERT INTO public.audit_logs (patient_id, event_type) VALUES ($1, 'share_accessed')", [a.userId]],
+      ["referencing another patient's document", "INSERT INTO public.audit_logs (patient_id, document_id, event_type) VALUES ($1, $2, 'document_uploaded')", [a.userId, b.documentId]],
+      ["referencing another patient's share", "INSERT INTO public.audit_logs (patient_id, share_id, event_type) VALUES ($1, $2, 'share_revoked')", [a.userId, b.shareId]],
+    ];
+    for (const [label, sql, params] of rejected) {
+      expect(await expectDbError(db.asUser(a.userId, (tx) => tx.query(sql, params))), label).toMatch(/row-level security/);
+    }
+  });
+
+  it("audit rows cannot be backdated, edited or deleted", async () => {
     expect(
       await expectDbError(
         db.asUser(a.userId, (tx) =>
-          tx.query("INSERT INTO public.audit_logs (patient_id, event_type) VALUES ($1, 'share_created')", [a.userId])
+          tx.query("INSERT INTO public.audit_logs (patient_id, event_type, created_at) VALUES ($1, 'share_created', '2000-01-01')", [a.userId])
         )
       )
     ).toMatch(/permission denied/);
@@ -264,15 +283,15 @@ describe("audit log", () => {
       await expectDbError(
         db.asUser(b.userId, (tx) => tx.query("SELECT public.record_audit_event('document_uploaded', $1)", [a.documentId]))
       )
-    ).toMatch(/Unknown document/);
+    ).toMatch(/row-level security/);
     expect(
       await expectDbError(
         db.asUser(b.userId, (tx) => tx.query("SELECT public.record_audit_event('share_revoked', NULL, $1)", [a.shareId]))
       )
-    ).toMatch(/Unknown share/);
+    ).toMatch(/row-level security/);
     expect(
       await expectDbError(db.asUser(a.userId, (tx) => tx.query("SELECT public.record_audit_event('share_accessed')")))
-    ).toMatch(/Unsupported audit event type/);
+    ).toMatch(/row-level security/);
   });
 
   it("access logs are written only by the service role and must match the share owner", async () => {
@@ -364,6 +383,19 @@ describe("functions exposed to the API", () => {
     expect(
       await expectDbError(db.asUser(a.userId, (tx) => tx.query("SELECT public.rls_auto_enable()")))
     ).toMatch(/permission denied/);
+  });
+
+  it("no function callable by API roles runs with elevated (SECURITY DEFINER) rights", async () => {
+    const { rows } = await db.asOwner((d) =>
+      d.query<{ fn: string }>(
+        `SELECT p.oid::regprocedure::text AS fn
+         FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+         WHERE n.nspname = 'public' AND p.prosecdef
+           AND (has_function_privilege('anon', p.oid, 'EXECUTE')
+             OR has_function_privilege('authenticated', p.oid, 'EXECUTE'))`
+      )
+    );
+    expect(rows).toEqual([]);
   });
 
   it("handle_new_user cannot be called directly", async () => {

@@ -15,10 +15,18 @@ const baseMed: Tables<"medications"> = {
   route: null,
   start_date: null,
   end_date: null,
-  status: null,
-  verification_status: null,
+  status: "unknown",
+  verification_status: "unverified",
   metadata: null,
-  created_at: null,
+  created_at: "2025-01-01T00:00:00Z",
+  updated_at: "2025-01-01T00:00:00Z",
+  duration: null,
+  instructions: null,
+  prescriber_name: null,
+  facility_name: null,
+  extraction_id: null,
+  source_page: null,
+  source_excerpt: null,
 };
 
 describe("review status", () => {
@@ -32,7 +40,6 @@ describe("review status", () => {
 
 describe("medication mapping", () => {
   it("does not assume an unknown status is current", () => {
-    expect(mapMedication({ ...baseMed, status: null }).status).toBe("uncertain");
     expect(mapMedication({ ...baseMed, status: "unknown" }).status).toBe("uncertain");
     expect(mapMedication({ ...baseMed, status: "active" }).status).toBe("current");
     expect(mapMedication({ ...baseMed, status: "historical" }).status).toBe("historical");
@@ -44,9 +51,15 @@ describe("medication mapping", () => {
     expect(med.sourceDocumentId).toBe("d1");
   });
 
-  it("ignores non-string metadata instead of rendering it", () => {
-    const med = mapMedication({ ...baseMed, metadata: { provider: 42, facility: ["x"] } });
-    expect(med.prescriberName).toBeNull();
-    expect(med.facilityName).toBeNull();
+  it("reads prescriber and facility from their columns, never from free-form metadata", () => {
+    const med = mapMedication({
+      ...baseMed,
+      prescriber_name: "Dr. Nair",
+      facility_name: "Apollo",
+      metadata: { provider: "Injected", facility: "Injected" },
+    });
+    expect(med.prescriberName).toBe("Dr. Nair");
+    expect(med.facilityName).toBe("Apollo");
+    expect(mapMedication({ ...baseMed, metadata: { provider: "Injected" } }).prescriberName).toBeNull();
   });
 });

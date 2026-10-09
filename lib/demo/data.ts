@@ -5,7 +5,25 @@
 // Rows are typed against the real database row types so that demo mode and
 // real-user mode go through the same mappers in lib/data/mappers.ts.
 
-import type { Tables } from "@/lib/types/database.types";
+import type { Database, Tables } from "@/lib/types/database.types";
+
+type TableName = keyof Database["public"]["Tables"];
+
+/** Source-traceability columns; demo rows have no extraction behind them. */
+const TRACE_DEFAULTS = { extraction_id: null, source_page: null, source_excerpt: null } as const;
+
+/**
+ * Fills columns the demo rows do not set. updated_at defaults to created_at.
+ * Typed so that a NEW required column added by a migration is a compile error
+ * here until the demo data is updated.
+ */
+function withDefaults<T extends TableName, D extends Partial<Tables<T>>>(
+  _table: T,
+  defaults: D,
+  rows: (Omit<Tables<T>, keyof D | "updated_at"> & Partial<Tables<T>>)[]
+): Tables<T>[] {
+  return rows.map((row) => ({ updated_at: (row as { created_at?: string }).created_at, ...defaults, ...row }) as Tables<T>);
+}
 
 export const DEMO_PATIENT_ID = "demo-user-00000-00000-00000-000001";
 
@@ -33,7 +51,7 @@ export const DEMO_PATIENT: Tables<"profiles"> = {
   updated_at: "2025-10-01T14:30:00Z",
 };
 
-export const DEMO_CONDITIONS: Tables<"conditions">[] = [
+export const DEMO_CONDITIONS: Tables<"conditions">[] = withDefaults("conditions", { diagnosed_date: null, ...TRACE_DEFAULTS }, [
   {
     id: "cond-001",
     patient_id: DEMO_PATIENT.user_id,
@@ -54,9 +72,9 @@ export const DEMO_CONDITIONS: Tables<"conditions">[] = [
     metadata: { is_demo: true },
     created_at: "2025-02-20T11:00:00Z",
   },
-];
+]);
 
-export const DEMO_ALLERGIES: Tables<"allergies">[] = [
+export const DEMO_ALLERGIES: Tables<"allergies">[] = withDefaults("allergies", { ...TRACE_DEFAULTS }, [
   {
     id: "allergy-001",
     patient_id: DEMO_PATIENT.user_id,
@@ -67,9 +85,9 @@ export const DEMO_ALLERGIES: Tables<"allergies">[] = [
     metadata: { is_demo: true, source: "patient_reported" },
     created_at: "2025-01-10T09:00:00Z",
   },
-];
+]);
 
-export const DEMO_MEDICATIONS: Tables<"medications">[] = [
+export const DEMO_MEDICATIONS: Tables<"medications">[] = withDefaults("medications", { duration: null, instructions: null, ...TRACE_DEFAULTS }, [
   {
     id: "med-001",
     patient_id: DEMO_PATIENT.user_id,
@@ -85,7 +103,9 @@ export const DEMO_MEDICATIONS: Tables<"medications">[] = [
     end_date: null,
     status: "active",
     verification_status: "verified",
-    metadata: { is_demo: true, provider: "Dr. Priya Nair", facility: "Apollo Hospitals" },
+    prescriber_name: "Dr. Priya Nair",
+    facility_name: "Apollo Hospitals",
+    metadata: { is_demo: true },
     created_at: "2025-01-15T10:00:00Z",
   },
   {
@@ -103,7 +123,9 @@ export const DEMO_MEDICATIONS: Tables<"medications">[] = [
     end_date: null,
     status: "active",
     verification_status: "verified",
-    metadata: { is_demo: true, provider: "Dr. Arjun Mehta", facility: "Max Healthcare" },
+    prescriber_name: "Dr. Arjun Mehta",
+    facility_name: "Max Healthcare",
+    metadata: { is_demo: true },
     created_at: "2025-02-20T11:00:00Z",
   },
   {
@@ -121,7 +143,9 @@ export const DEMO_MEDICATIONS: Tables<"medications">[] = [
     end_date: null,
     status: "active",
     verification_status: "verified",
-    metadata: { is_demo: true, provider: "Dr. Arjun Mehta", facility: "Max Healthcare" },
+    prescriber_name: "Dr. Arjun Mehta",
+    facility_name: "Max Healthcare",
+    metadata: { is_demo: true },
     created_at: "2025-02-20T11:00:00Z",
   },
   {
@@ -139,12 +163,14 @@ export const DEMO_MEDICATIONS: Tables<"medications">[] = [
     end_date: null,
     status: "active",
     verification_status: "verified",
-    metadata: { is_demo: true, provider: "Dr. Shalini Iyer", facility: "Fortis Hospital" },
+    prescriber_name: "Dr. Shalini Iyer",
+    facility_name: "Fortis Hospital",
+    metadata: { is_demo: true },
     created_at: "2025-09-10T14:00:00Z",
   },
-];
+]);
 
-export const DEMO_LAB_RESULTS: Tables<"lab_results">[] = [
+export const DEMO_LAB_RESULTS: Tables<"lab_results">[] = withDefaults("lab_results", { lab_name: null, ...TRACE_DEFAULTS }, [
   {
     id: "lab-001",
     patient_id: DEMO_PATIENT.user_id,
@@ -235,9 +261,9 @@ export const DEMO_LAB_RESULTS: Tables<"lab_results">[] = [
     metadata: { is_demo: true },
     created_at: "2025-07-17T09:00:00Z",
   },
-];
+]);
 
-export const DEMO_DOCUMENTS: Tables<"documents">[] = [
+export const DEMO_DOCUMENTS: Tables<"documents">[] = withDefaults("documents", { content_sha256: null, size_bytes: null, page_count: null, processing_error: null, processing_attempts: 0, processing_started_at: null, processed_at: null, cancelled_at: null }, [
   {
     id: "doc-001",
     patient_id: DEMO_PATIENT.user_id,
@@ -250,7 +276,8 @@ export const DEMO_DOCUMENTS: Tables<"documents">[] = [
     extraction_status: "done",
     verification_status: "verified",
     extracted_data: null,
-    metadata: { is_demo: true, facility: "Apollo Hospitals" },
+    facility_name: "Apollo Hospitals",
+    metadata: { is_demo: true },
     created_at: "2025-01-15T10:30:00Z",
   },
   {
@@ -265,7 +292,8 @@ export const DEMO_DOCUMENTS: Tables<"documents">[] = [
     extraction_status: "done",
     verification_status: "verified",
     extracted_data: null,
-    metadata: { is_demo: true, facility: "Max Healthcare" },
+    facility_name: "Max Healthcare",
+    metadata: { is_demo: true },
     created_at: "2025-02-20T12:00:00Z",
   },
   {
@@ -280,7 +308,8 @@ export const DEMO_DOCUMENTS: Tables<"documents">[] = [
     extraction_status: "done",
     verification_status: "verified",
     extracted_data: null,
-    metadata: { is_demo: true, facility: "Fortis Hospital" },
+    facility_name: "Fortis Hospital",
+    metadata: { is_demo: true },
     created_at: "2025-09-10T14:30:00Z",
   },
   {
@@ -292,6 +321,7 @@ export const DEMO_DOCUMENTS: Tables<"documents">[] = [
     document_type: "lab_report",
     document_date: "2025-01-20",
     provider_name: "SRL Diagnostics",
+    facility_name: null,
     extraction_status: "done",
     verification_status: "verified",
     extracted_data: null,
@@ -307,15 +337,16 @@ export const DEMO_DOCUMENTS: Tables<"documents">[] = [
     document_type: "lab_report",
     document_date: "2025-07-15",
     provider_name: "Thyrocare Technologies",
+    facility_name: null,
     extraction_status: "done",
     verification_status: "verified",
     extracted_data: null,
     metadata: { is_demo: true },
     created_at: "2025-07-17T09:30:00Z",
   },
-];
+]);
 
-export const DEMO_MEDICAL_EVENTS: Tables<"medical_events">[] = [
+export const DEMO_MEDICAL_EVENTS: Tables<"medical_events">[] = withDefaults("medical_events", { ...TRACE_DEFAULTS }, [
   {
     id: "evt-001",
     patient_id: DEMO_PATIENT.user_id,
@@ -325,7 +356,9 @@ export const DEMO_MEDICAL_EVENTS: Tables<"medical_events">[] = [
     title: "Prescription — Apollo Hospitals",
     summary: "Dr. Priya Nair prescribed Metformin 500mg BD for Type 2 Diabetes management.",
     verification_status: "verified",
-    structured_data: { provider: "Dr. Priya Nair", facility: "Apollo Hospitals" },
+    provider_name: "Dr. Priya Nair",
+    facility_name: "Apollo Hospitals",
+    structured_data: null,
     metadata: { is_demo: true },
     created_at: "2025-01-15T10:30:00Z",
   },
@@ -338,7 +371,9 @@ export const DEMO_MEDICAL_EVENTS: Tables<"medical_events">[] = [
     title: "Lab Results — HbA1c 7.8%",
     summary: "HbA1c recorded as 7.8%. Report reference range: <5.7%.",
     verification_status: "verified",
-    structured_data: { lab: "SRL Diagnostics", key_result: "HbA1c 7.8%" },
+    provider_name: null,
+    facility_name: "SRL Diagnostics",
+    structured_data: null,
     metadata: { is_demo: true },
     created_at: "2025-01-22T09:30:00Z",
   },
@@ -351,7 +386,9 @@ export const DEMO_MEDICAL_EVENTS: Tables<"medical_events">[] = [
     title: "Prescription — Max Healthcare",
     summary: "Dr. Arjun Mehta prescribed Amlodipine 5mg OD and Atorvastatin 10mg OD for hypertension and lipid management.",
     verification_status: "verified",
-    structured_data: { provider: "Dr. Arjun Mehta", facility: "Max Healthcare" },
+    provider_name: "Dr. Arjun Mehta",
+    facility_name: "Max Healthcare",
+    structured_data: null,
     metadata: { is_demo: true },
     created_at: "2025-02-20T12:00:00Z",
   },
@@ -364,7 +401,9 @@ export const DEMO_MEDICAL_EVENTS: Tables<"medical_events">[] = [
     title: "Lab Results — HbA1c 7.4%",
     summary: "HbA1c recorded as 7.4%. Report reference range: <5.7%.",
     verification_status: "verified",
-    structured_data: { lab: "SRL Diagnostics", key_result: "HbA1c 7.4%" },
+    provider_name: null,
+    facility_name: "SRL Diagnostics",
+    structured_data: null,
     metadata: { is_demo: true },
     created_at: "2025-04-20T09:30:00Z",
   },
@@ -377,7 +416,9 @@ export const DEMO_MEDICAL_EVENTS: Tables<"medical_events">[] = [
     title: "Lab Results — HbA1c, TSH, RBS, Creatinine",
     summary: "HbA1c 7.2%, TSH 2.1 mIU/L, random blood sugar 142 mg/dL and serum creatinine 0.9 mg/dL recorded.",
     verification_status: "verified",
-    structured_data: { lab: "Thyrocare Technologies", key_result: "HbA1c 7.2%" },
+    provider_name: null,
+    facility_name: "Thyrocare Technologies",
+    structured_data: null,
     metadata: { is_demo: true },
     created_at: "2025-07-17T09:30:00Z",
   },
@@ -390,13 +431,15 @@ export const DEMO_MEDICAL_EVENTS: Tables<"medical_events">[] = [
     title: "Prescription — Fortis Hospital",
     summary: "Dr. Shalini Iyer prescribed Metformin 1000mg OD.",
     verification_status: "verified",
-    structured_data: { provider: "Dr. Shalini Iyer", facility: "Fortis Hospital" },
+    provider_name: "Dr. Shalini Iyer",
+    facility_name: "Fortis Hospital",
+    structured_data: null,
     metadata: { is_demo: true },
     created_at: "2025-09-10T14:30:00Z",
   },
-];
+]);
 
-const DEMO_SHARE_ROWS: Tables<"record_shares">[] = [
+const DEMO_SHARE_ROWS: Tables<"record_shares">[] = withDefaults("record_shares", { document_ids: [], consent_given_at: null, failed_pin_attempts: 0, locked_until: null, last_accessed_at: null }, [
   {
     id: "share-001",
     patient_id: DEMO_PATIENT.user_id,
@@ -411,7 +454,8 @@ const DEMO_SHARE_ROWS: Tables<"record_shares">[] = [
     date_range_end: null,
     expires_at: "", // set by demoShares(): rolling, so the demo link stays usable
     revoked_at: null,
-    metadata: { is_demo: true, label: "Dr. Mehta — Full Records" },
+    label: "Dr. Mehta — Full Records",
+    metadata: { is_demo: true },
     created_at: "2025-10-10T10:00:00Z",
   },
   {
@@ -428,10 +472,11 @@ const DEMO_SHARE_ROWS: Tables<"record_shares">[] = [
     date_range_end: "2025-06-30",
     expires_at: "2025-10-01T18:00:00Z",
     revoked_at: "2025-09-28T15:00:00Z",
-    metadata: { is_demo: true, label: "Pharmacy — Medications Only" },
+    label: "Pharmacy — Medications Only",
+    metadata: { is_demo: true },
     created_at: "2025-09-01T10:00:00Z",
   },
-];
+]);
 
 /**
  * Demo share rows. The active link expires 30 days after `now`; this is a
@@ -458,7 +503,7 @@ export const DEMO_AUDIT_LOGS: Tables<"audit_logs">[] = [
     share_id: null,
     document_id: "doc-001",
     event_type: "extraction_completed",
-    metadata: { is_demo: true, confidence: 0.92 },
+    metadata: { is_demo: true },
     created_at: "2025-01-15T10:31:00Z",
   },
   {

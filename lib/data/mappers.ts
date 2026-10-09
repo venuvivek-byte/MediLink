@@ -86,7 +86,6 @@ export function mapProfile(row: Tables<"profiles">): PatientProfile {
 }
 
 export function mapDocument(row: Tables<"documents">): DocumentSummary {
-  const meta = asRecord(row.metadata);
   return {
     id: row.id,
     filename: row.original_filename,
@@ -94,7 +93,7 @@ export function mapDocument(row: Tables<"documents">): DocumentSummary {
     documentType: toDocumentType(row.document_type),
     documentDate: row.document_date,
     providerName: row.provider_name,
-    facilityName: str(meta, "facility"),
+    facilityName: row.facility_name,
     processingStatus: toProcessingStatus(row.extraction_status),
     reviewStatus: toReviewStatus(row.verification_status),
     uploadedAt: row.created_at,
@@ -102,22 +101,20 @@ export function mapDocument(row: Tables<"documents">): DocumentSummary {
 }
 
 export function mapTimelineEvent(row: Tables<"medical_events">): TimelineEvent {
-  const data = asRecord(row.structured_data);
   return {
     id: row.id,
     eventType: row.event_type,
     eventDate: row.event_date,
     title: row.title,
     summary: row.summary,
-    providerName: str(data, "provider"),
-    facilityName: str(data, "facility") ?? str(data, "lab"),
+    providerName: row.provider_name,
+    facilityName: row.facility_name,
     reviewStatus: toReviewStatus(row.verification_status),
     sourceDocumentId: row.document_id,
   };
 }
 
 export function mapMedication(row: Tables<"medications">): Medication {
-  const meta = asRecord(row.metadata);
   return {
     id: row.id,
     name: row.name,
@@ -131,8 +128,8 @@ export function mapMedication(row: Tables<"medications">): Medication {
     endDate: row.end_date,
     status: toMedicationStatus(row.status),
     reviewStatus: toReviewStatus(row.verification_status),
-    prescriberName: str(meta, "provider"),
-    facilityName: str(meta, "facility"),
+    prescriberName: row.prescriber_name,
+    facilityName: row.facility_name,
     sourceDocumentId: row.source_document_id,
   };
 }
@@ -184,7 +181,7 @@ const SHARE_CATEGORIES: ShareCategory[] = [
 /** Excludes token_hash and pin_hash by construction. */
 export type ShareRow = Pick<
   Tables<"record_shares">,
-  "id" | "scope" | "expires_at" | "revoked_at" | "metadata" | "created_at"
+  "id" | "label" | "scope" | "expires_at" | "revoked_at" | "created_at"
 >;
 
 export function mapShareLink(row: ShareRow): ShareLinkSummary {
@@ -192,7 +189,7 @@ export function mapShareLink(row: ShareRow): ShareLinkSummary {
   const rawCategories = Array.isArray(scope.categories) ? scope.categories : [];
   return {
     id: row.id,
-    label: str(asRecord(row.metadata), "label") ?? "Clinician share",
+    label: row.label?.trim() || "Clinician share",
     categories: rawCategories.filter((c): c is ShareCategory =>
       SHARE_CATEGORIES.includes(c as ShareCategory)
     ),

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import { GoogleButton, OrDivider } from "../GoogleButton";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -26,7 +27,11 @@ export function SignupForm() {
       const { error: signUpError } = await createClient().auth.signUp({
         email,
         password,
-        options: { data: { display_name: fullName.trim() } },
+        options: {
+          data: { display_name: fullName.trim() },
+          // Default Supabase confirmation email -> verify -> back here with a PKCE code.
+          emailRedirectTo: `${window.location.origin}/auth/callback?flow=email`,
+        },
       });
       if (signUpError) {
         setError(signUpError.message);
@@ -63,6 +68,8 @@ export function SignupForm() {
           <span>{error}</span>
         </div>
       )}
+      <GoogleButton label="Sign up with Google" />
+      <OrDivider />
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="space-y-1">
           <Label htmlFor="fullName" className="text-xs">Full name</Label>

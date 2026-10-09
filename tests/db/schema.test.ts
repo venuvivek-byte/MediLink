@@ -24,6 +24,10 @@ describe("automatic profile creation", () => {
       [{ display_name: "" }, "Patient"],
       [{}, "Patient"],
       [{ display_name: "x".repeat(300) }, "x".repeat(120)],
+      // Google OAuth metadata shape
+      [{ full_name: "Ravi Kumar", name: "Ravi K", avatar_url: "https://x" }, "Ravi Kumar"],
+      [{ name: "Meera" }, "Meera"],
+      [{ display_name: "   ", full_name: "Fallback Name" }, "Fallback Name"],
     ];
     for (const [meta, expected] of cases) {
       const id = await db.createUser(`${crypto.randomUUID()}@example.test`, meta);

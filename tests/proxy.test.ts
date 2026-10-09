@@ -54,13 +54,15 @@ describe("proxy redirects (demo mode)", () => {
     expect(getRedirectUrl(await proxy(req))).toBeNull();
   });
 
-  it("lets the email confirmation link through without a session", async () => {
-    const res = await proxy(new NextRequest("http://localhost/auth/confirm?token_hash=x&type=email"));
-    expect(getRedirectUrl(res)).toBeNull();
-  });
+  it.each(["/auth/callback?code=x", "/auth/callback?code=x&flow=email"])(
+    "lets %s through without a session",
+    async (path) => {
+      expect(getRedirectUrl(await proxy(new NextRequest(`http://localhost${path}`)))).toBeNull();
+    }
+  );
 
   it("does not treat look-alike paths as public", async () => {
-    for (const path of ["/loginx", "/auth/confirmed-records", "/signup-data"]) {
+    for (const path of ["/loginx", "/auth/confirm", "/auth/callbackx", "/auth", "/signup-data"]) {
       expect(getRedirectUrl(await proxy(new NextRequest(`http://localhost${path}`))), path).toBe("http://localhost/login");
     }
   });

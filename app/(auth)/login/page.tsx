@@ -8,8 +8,11 @@ import { LoginForm } from "./LoginForm";
 export const metadata = { title: "Sign in" };
 
 const ERROR_MESSAGES: Record<string, string> = {
-  confirmation_failed: "That confirmation link is invalid or has expired. Try signing in, or sign up again for a new link.",
-  demo_mode: "Email confirmation is not used in demo mode.",
+  email_confirmed_sign_in: "Your email is confirmed. Please sign in.",
+  email_link_invalid: "That confirmation link is invalid or has expired. Try signing in, or sign up again for a new link.",
+  demo_mode: "Account sign-in is not used in demo mode.",
+  oauth_cancelled: "Google sign-in was cancelled.",
+  oauth_failed: "Google sign-in did not complete. Please try again.",
 };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;

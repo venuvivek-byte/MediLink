@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 import type { AppMode } from "@/lib/config/schema";
 import { startDemoSessionAction } from "../actions";
+import { GoogleButton, OrDivider } from "../GoogleButton";
 
 export function LoginForm({ mode }: { mode: AppMode }) {
   return mode === "demo" ? <DemoLogin /> : <PasswordLogin />;
@@ -80,6 +81,8 @@ function PasswordLogin() {
   return (
     <>
       {error && <FormError message={error} />}
+      <GoogleButton />
+      <OrDivider />
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="space-y-1">
           <Label htmlFor="email" className="text-xs">Email</Label>

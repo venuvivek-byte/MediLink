@@ -117,7 +117,7 @@ export class SupabasePatientRepository implements PatientRepository {
       "share links",
       await this.client
         .from("record_shares")
-        .select("id, scope, expires_at, revoked_at, metadata, created_at")
+        .select("id, label, scope, expires_at, revoked_at, created_at")
         .eq("patient_id", this.patientId)
         .order("created_at", { ascending: false })
     );

@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { PageSkeleton } from "@/components/layout/PageSkeleton";
 import { FlaskConical, Repeat } from "lucide-react";
 import Header from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +11,17 @@ import { formatDate } from "@/lib/format";
 
 export const metadata = { title: "Lab results" };
 
-export default async function LabResultsPage() {
+// Patient data is request-time: stream it behind Suspense so navigation shows
+// the page immediately (Cache Components). Health data is never server-cached.
+export default function LabResultsPage() {
+  return (
+    <Suspense fallback={<PageSkeleton title="Lab results" subtitle="Results as printed on your reports, compared over time" />}>
+      <LabResultsContent />
+    </Suspense>
+  );
+}
+
+async function LabResultsContent() {
   const labs = await (await getPatientRepository()).listLabResults();
   const series = buildLabSeries(labs);
   const repeats = findRepeatTests(labs);

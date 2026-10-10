@@ -16,9 +16,11 @@ const STATUS: Partial<Record<DocumentErrorCode, number>> = {
   ocr_failed: 422,
   ai_invalid_output: 502,
   ocr_unavailable: 503,
+  ocr_timeout: 504,
   ai_unavailable: 503,
   ai_not_configured: 503,
   storage_failed: 503,
+  internal_error: 500,
 };
 
 export const NO_STORE = { "Cache-Control": "no-store" };

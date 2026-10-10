@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { PageSkeleton } from "@/components/layout/PageSkeleton";
 import Header from "@/components/layout/Header";
 import { HealthSnapshot } from "@/components/dashboard/HealthSnapshot";
 import { AlertsPanel } from "@/components/dashboard/AlertsPanel";
@@ -8,7 +10,17 @@ import { findDuplicateMedications, findRepeatTests } from "@/lib/domain/insights
 
 export const metadata = { title: "Overview" };
 
-export default async function DashboardPage() {
+// Patient data is request-time: stream it behind Suspense so navigation shows
+// the page immediately (Cache Components). Health data is never server-cached.
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<PageSkeleton title="Welcome" subtitle="Your records from every clinic, lab and pharmacy in one place" />}>
+      <DashboardContent />
+    </Suspense>
+  );
+}
+
+async function DashboardContent() {
   const repo = await getPatientRepository();
   const [profile, medications, labs, events, allergies, conditions] = await Promise.all([
     repo.getProfile(),

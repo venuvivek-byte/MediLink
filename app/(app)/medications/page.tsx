@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { PageSkeleton } from "@/components/layout/PageSkeleton";
 import { AlertTriangle, Building2, Info, Pill, Stethoscope } from "lucide-react";
 import Header from "@/components/layout/Header";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +23,17 @@ const SECTIONS: { status: MedicationStatus; title: string; description: string }
   { status: "discontinued", title: "Discontinued", description: "Recorded as stopped." },
 ];
 
-export default async function MedicationsPage() {
+// Patient data is request-time: stream it behind Suspense so navigation shows
+// the page immediately (Cache Components). Health data is never server-cached.
+export default function MedicationsPage() {
+  return (
+    <Suspense fallback={<PageSkeleton title="Medications" subtitle="Every medicine found in your records, with its source" />}>
+      <MedicationsContent />
+    </Suspense>
+  );
+}
+
+async function MedicationsContent() {
   const medications = await (await getPatientRepository()).listMedications();
   const duplicates = findDuplicateMedications(medications);
   const flagged = new Set(duplicates.flatMap((d) => d.records.map((r) => r.id)));

@@ -106,23 +106,33 @@ export async function uploadDocument(
 }
 
 /** Text for every page: embedded PDF text first, OCR only where needed. */
-async function readPages(bytes: Uint8Array, mimeType: string): Promise<{ pages: PageText[]; pageCount: number; usedOcr: boolean }> {
+/** A page's text plus where it came from, so every stored page is traceable. */
+interface SourcedPage extends PageText {
+  source: "pdf_text" | "ocr";
+  /** OCR engine confidence (0..1); null for embedded PDF text. */
+  confidence: number | null;
+}
+
+async function readPages(bytes: Uint8Array, mimeType: string): Promise<{ pages: SourcedPage[]; pageCount: number }> {
   const ocr = getOcrProvider(getConfig());
   if (mimeType === "application/pdf") {
     const pdf = await extractPdfText(bytes);
-    let pages = pdf.textPages;
+    let pages: SourcedPage[] = pdf.textPages.map((p) => ({ ...p, source: "pdf_text", confidence: null }));
     if (pdf.pagesNeedingOcr.length > 0) {
       // Never silently drop pages: if any page needs OCR and OCR is not
       // available, the whole document fails with a clear reason.
       const ocrPages = await ocr.recognize({ bytes, mimeType, pages: pdf.pagesNeedingOcr });
-      pages = [...pages, ...ocrPages.map((p) => ({ pageNumber: p.pageNumber, text: p.text }))].sort(
+      pages = [...pages, ...ocrPages.map((p): SourcedPage => ({ pageNumber: p.pageNumber, text: p.text, source: "ocr", confidence: p.confidence }))].sort(
         (a, b) => a.pageNumber - b.pageNumber
       );
     }
-    return { pages, pageCount: pdf.pageCount, usedOcr: pdf.pagesNeedingOcr.length > 0 };
+    return { pages, pageCount: pdf.pageCount };
   }
   const ocrPages = await ocr.recognize({ bytes, mimeType });
-  return { pages: ocrPages.map((p) => ({ pageNumber: p.pageNumber, text: p.text })), pageCount: 1, usedOcr: true };
+  return {
+    pages: ocrPages.map((p): SourcedPage => ({ pageNumber: p.pageNumber, text: p.text, source: "ocr", confidence: p.confidence })),
+    pageCount: 1,
+  };
 }
 
 export type ProcessResult = { ok: true; extractionId: string } | { ok: false; code: DocumentErrorCode; retryable: boolean };
@@ -154,8 +164,9 @@ export async function processDocument(session: Session, documentId: string): Pro
 
   let extractionId: string | null = null;
   const fail = async (error: unknown): Promise<ProcessResult> => {
-    const docError = isDocumentError(error) ? error : new DocumentError("ai_unavailable", true);
-    if (!isDocumentError(error)) console.error("[documents] unexpected processing error");
+    const docError = isDocumentError(error) ? error : new DocumentError("internal_error", true);
+    // Error name only: messages from parsers/providers can echo document content.
+    if (!isDocumentError(error)) console.error("[documents] unexpected processing error", { name: (error as { name?: string })?.name ?? "unknown" });
     await supabase
       .from("documents")
       .update({ extraction_status: "failed", processing_error: docError.code })
@@ -171,11 +182,18 @@ export async function processDocument(session: Session, documentId: string): Pro
   };
 
   try {
+    // Fail fast before downloading, parsing or sending anything to OCR.
+    const config = getConfig();
+    const provider = getConfiguredProvider(config);
+    if (!provider) throw new DocumentError("ai_not_configured");
+
     const { data: blob, error: downloadError } = await supabase.storage.from(DOCUMENTS_BUCKET).download(doc.storage_path);
     if (downloadError || !blob) throw new DocumentError("storage_failed", true);
     const bytes = new Uint8Array(await blob.arrayBuffer());
 
-    const { pages, pageCount, usedOcr } = await readPages(bytes, doc.mime_type);
+    const { pages, pageCount } = await readPages(bytes, doc.mime_type);
+    const usedOcr = pages.some((p) => p.source === "ocr");
+    const usedPdfText = pages.some((p) => p.source === "pdf_text");
     if (pages.every((p) => p.text.trim().length === 0)) throw new DocumentError("no_text_found");
 
     // Keep the extracted text for traceability (replaced on retry).
@@ -185,15 +203,13 @@ export async function processDocument(session: Session, documentId: string): Pro
         document_id: documentId,
         patient_id: patientId,
         page_number: p.pageNumber,
-        text_source: usedOcr && doc.mime_type !== "application/pdf" ? "ocr" : "pdf_text",
+        text_source: p.source,
+        ocr_confidence: p.confidence,
         content: p.text,
       }))
     );
     if (pagesError) throw new DocumentError("storage_failed", true);
 
-    const config = getConfig();
-    const provider = getConfiguredProvider(config);
-    if (!provider) throw new DocumentError("ai_not_configured");
 
     const { data: extraction, error: extractionError } = await supabase
       .from("document_extractions")
@@ -202,7 +218,7 @@ export async function processDocument(session: Session, documentId: string): Pro
         patient_id: patientId,
         status: "pending",
         schema_version: "1",
-        text_source: usedOcr ? (doc.mime_type === "application/pdf" ? "mixed" : "ocr") : "pdf_text",
+        text_source: usedOcr && usedPdfText ? "mixed" : usedOcr ? "ocr" : "pdf_text",
         ocr_provider: usedOcr ? getOcrProvider(config).name : null,
         ai_provider: provider.name,
         ai_model: provider.model,

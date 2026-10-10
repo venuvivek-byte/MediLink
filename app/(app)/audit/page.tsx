@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { PageSkeleton } from "@/components/layout/PageSkeleton";
 import { ClipboardList, Eye, FileText, Lock, ShieldCheck, Upload, XCircle } from "lucide-react";
 import Header from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +17,17 @@ const ICONS: Record<string, typeof Upload> = {
   share_revoked: XCircle,
 };
 
-export default async function AuditPage() {
+// Patient data is request-time: stream it behind Suspense so navigation shows
+// the page immediately (Cache Components). Health data is never server-cached.
+export default function AuditPage() {
+  return (
+    <Suspense fallback={<PageSkeleton title="Audit history" subtitle="Uploads, reviews and sharing activity on your account" />}>
+      <AuditContent />
+    </Suspense>
+  );
+}
+
+async function AuditContent() {
   const events = await (await getPatientRepository()).listAuditEvents();
 
   return (

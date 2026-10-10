@@ -26,7 +26,14 @@ export interface OcrProvider {
   recognize(request: OcrRequest): Promise<OcrPage[]>;
 }
 
-export const OCR_TIMEOUT_MS = 120_000;
+/**
+ * OCR time budget: a base plus a per-page allowance, capped so OCR + AI
+ * (up to ~3 x 60s) still fit inside the process route's 300s maxDuration.
+ */
+export const OCR_MAX_TIMEOUT_MS = 120_000;
+export function ocrTimeoutMs(pageCount: number): number {
+  return Math.min(OCR_MAX_TIMEOUT_MS, 30_000 + 20_000 * Math.max(1, pageCount));
+}
 
 /** Used when OCR is disabled: scanned documents fail with a clear message. */
 export class NoOcrProvider implements OcrProvider {
@@ -70,10 +77,11 @@ export class PaddleOcrProvider implements OcrProvider {
         method: "POST",
         headers: { Authorization: `Bearer ${this.token}` },
         body: form,
-        signal: AbortSignal.timeout(OCR_TIMEOUT_MS),
+        signal: AbortSignal.timeout(ocrTimeoutMs(pages?.length ?? 1)),
       });
-    } catch {
-      // Service down or timed out.
+    } catch (error) {
+      // A slow service is not a missing one: say which, so the message is true.
+      if ((error as { name?: string })?.name === "TimeoutError") throw new DocumentError("ocr_timeout", true);
       throw new DocumentError("ocr_unavailable", true);
     }
 

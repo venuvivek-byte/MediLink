@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { PageSkeleton } from "@/components/layout/PageSkeleton";
 import { Info, Phone, Server, User } from "lucide-react";
 import Header from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +9,17 @@ import { formatDate } from "@/lib/format";
 
 export const metadata = { title: "Settings" };
 
-export default async function SettingsPage() {
+// Patient data is request-time: stream it behind Suspense so navigation shows
+// the page immediately (Cache Components). Health data is never server-cached.
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<PageSkeleton title="Settings" subtitle="Your profile and how this app is configured" />}>
+      <SettingsContent />
+    </Suspense>
+  );
+}
+
+async function SettingsContent() {
   const profile = await (await getPatientRepository()).getProfile();
   const config = getConfig();
 

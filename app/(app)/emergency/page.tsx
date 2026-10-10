@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { PageSkeleton } from "@/components/layout/PageSkeleton";
 import { Info, QrCode } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import Header from "@/components/layout/Header";
@@ -11,7 +13,17 @@ import { DEMO_EMERGENCY_TOKEN } from "@/lib/demo/data";
 
 export const metadata = { title: "Emergency card" };
 
-export default async function EmergencyPage() {
+// Patient data is request-time: stream it behind Suspense so navigation shows
+// the page immediately (Cache Components). Health data is never server-cached.
+export default function EmergencyPage() {
+  return (
+    <Suspense fallback={<PageSkeleton title="Emergency card" subtitle="What a first responder sees when they scan your QR code" />}>
+      <EmergencyContent />
+    </Suspense>
+  );
+}
+
+async function EmergencyContent() {
   const repo = await getPatientRepository();
   const [profile, allergies, conditions] = await Promise.all([
     repo.getProfile(),

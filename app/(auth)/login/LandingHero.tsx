@@ -74,29 +74,12 @@ export function LandingHero({ mode }: LandingHeroProps) {
           </div>
         </div>
 
-        <nav className="flex items-center gap-2 sm:gap-4 text-sm">
-          <a
-            href="#about-section"
-            onClick={handleScrollToContent}
-            className="px-3.5 py-1.5 rounded-full text-[#031d15] hover:text-black font-extrabold text-sm hover:bg-white/75 transition-all hidden sm:inline-block drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)] tracking-tight"
-          >
-            About
-          </a>
-          <a
-            href="#features-section"
-            onClick={(e) => {
-              e.preventDefault();
-              document.getElementById("features-section")?.scrollIntoView({ behavior: "smooth" });
-            }}
-            className="px-3.5 py-1.5 rounded-full text-[#031d15] hover:text-black font-extrabold text-sm hover:bg-white/75 transition-all hidden sm:inline-block drop-shadow-[0_1px_2px_rgba(255,255,255,0.9)] tracking-tight"
-          >
-            Features
-          </a>
+        <nav className="flex items-center">
           <button
             type="button"
             disabled={isPending}
             onClick={handleGetStarted}
-            className="px-5 py-2.5 rounded-full bg-white/95 hover:bg-white text-[#031d15] text-xs sm:text-sm font-extrabold shadow-xs hover:shadow-md transition-all cursor-pointer backdrop-blur-xs border border-white/80"
+            className="px-5 py-2.5 rounded-full bg-white/90 hover:bg-white text-[#063326] text-xs sm:text-sm font-semibold shadow-xs hover:shadow-md transition-all cursor-pointer backdrop-blur-xs border border-white/70"
           >
             {isPending ? "Connecting…" : mode === "demo" ? "Explore Demo" : "Sign In"}
           </button>

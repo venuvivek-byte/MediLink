@@ -8,7 +8,7 @@ export interface ExtractionRequest {
 
 /** A provider returns RAW model output; validation happens in lib/ai/index.ts. */
 export interface ExtractionProvider {
-  readonly name: "gemini" | "openai" | "groq" | "simulated";
+  readonly name: "gemini" | "openai" | "groq" | "openrouter" | "simulated";
   readonly model: string;
   readonly isSimulated: boolean;
   extract(request: ExtractionRequest): Promise<unknown>;

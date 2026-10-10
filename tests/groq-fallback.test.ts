@@ -154,15 +154,28 @@ describe("runExtractionWithFallback", () => {
     expect(primary.extract).toHaveBeenCalledTimes(3);
   });
 
-  it("never retries invalid output or auth problems on the backup", async () => {
+  it("never retries invalid output on the backup", async () => {
     const backup = provider("groq", async () => VALID);
     const bad = provider("gemini", async () => ({ nonsense: true }));
     await expect(runExtractionWithFallback(bad, backup, PAGES, fast)).rejects.toMatchObject({ code: "ai_invalid_output" });
+    expect(backup.extract).not.toHaveBeenCalled();
+  });
+
+  it("uses the backup when the primary's key is rejected, and logs it as an error", async () => {
+    const backup = provider("groq", async () => VALID);
     const auth = provider("gemini", async () => {
       throw new ProviderError("auth", "bad key", 401);
     });
-    await expect(runExtractionWithFallback(auth, backup, PAGES, fast)).rejects.toMatchObject({ code: "ai_not_configured" });
-    expect(backup.extract).not.toHaveBeenCalled();
+    expect(await runExtractionWithFallback(auth, backup, PAGES, fast)).toMatchObject({ provider: "groq" });
+    expect(auth.extract).toHaveBeenCalledOnce(); // a rejected key is not retried
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining("rejected its API key"));
+  });
+
+  it("without any backup, a rejected key is still reported as a configuration problem", async () => {
+    const auth = provider("gemini", async () => {
+      throw new ProviderError("auth", "bad key", 401);
+    });
+    await expect(runExtractionWithFallback(auth, [], PAGES, fast)).rejects.toMatchObject({ code: "ai_not_configured" });
   });
 
   it("without a backup, the primary's error is unchanged", async () => {

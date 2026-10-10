@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { AppConfig } from "@/lib/config/schema";
 import { DocumentError } from "@/lib/documents/errors";
 import { GeminiVisionOcrProvider } from "./gemini";
-import { GroqVisionOcrProvider } from "./groq";
+import { GroqVisionOcrProvider, OpenRouterVisionOcrProvider } from "./groq";
 
 // OCR is independent of the AI provider: it only turns page images into text
 // (with confidence and page numbers). It never interprets clinical meaning.
@@ -106,32 +106,41 @@ export class PaddleOcrProvider implements OcrProvider {
 /** Errors that mean "this provider cannot help right now", as opposed to "this document cannot be read". */
 const UNAVAILABLE_CODES = new Set(["ocr_unavailable", "ocr_timeout"]);
 
+type BackupOcrProvider = OcrProvider & { supports(request: OcrRequest): boolean };
+
 /**
- * Tries the primary OCR; only when it is unavailable (quota, outage, not
- * running, timeout) and the backup can handle this file does the backup run.
- * Every returned page is stamped with the provider that actually read it.
+ * Tries the primary OCR; only when it is unavailable (quota, outage, bad key,
+ * not running, timeout) does the next backup that can handle this file run,
+ * and so on down the list. "This document cannot be read" is never retried
+ * elsewhere. Every returned page is stamped with the provider that read it.
  */
 export class FallbackOcrProvider implements OcrProvider {
   readonly available = true;
+  private readonly backups: BackupOcrProvider[];
 
   constructor(
     private readonly primary: OcrProvider,
-    private readonly backup: OcrProvider & { supports(request: OcrRequest): boolean }
-  ) {}
+    backups: BackupOcrProvider | BackupOcrProvider[]
+  ) {
+    this.backups = Array.isArray(backups) ? backups : [backups];
+  }
 
   get name() {
     return this.primary.name;
   }
 
   async recognize(request: OcrRequest): Promise<OcrPage[]> {
-    try {
-      const pages = await this.primary.recognize(request);
-      return pages.map((p) => ({ ...p, engine: p.engine ?? this.primary.name }));
-    } catch (error) {
-      const unavailable = error instanceof DocumentError && UNAVAILABLE_CODES.has(error.code);
-      if (!unavailable || !this.backup.supports(request)) throw error;
-      console.warn(`[ocr] ${this.primary.name} unavailable; using backup ${this.backup.name}`);
-      return this.backup.recognize(request);
+    const chain: OcrProvider[] = [this.primary, ...this.backups.filter((b) => b.supports(request))];
+    for (let i = 0; ; i++) {
+      try {
+        const pages = await chain[i].recognize(request);
+        return pages.map((p) => ({ ...p, engine: p.engine ?? chain[i].name }));
+      } catch (error) {
+        const unavailable = error instanceof DocumentError && UNAVAILABLE_CODES.has(error.code);
+        const next = chain[i + 1];
+        if (!unavailable || !next) throw error;
+        console.warn(`[ocr] ${chain[i].name} unavailable; using backup ${next.name}`);
+      }
     }
   }
 }
@@ -149,8 +158,14 @@ function primaryOcrProvider(config: AppConfig): OcrProvider {
 
 export function getOcrProvider(config: AppConfig): OcrProvider {
   const primary = primaryOcrProvider(config);
+  // OCR_ENABLED=false switches OCR off entirely, backups included.
+  if (!config.ocr.enabled) return primary;
+  const backups: BackupOcrProvider[] = [];
   const groqKey = process.env.GROQ_API_KEY;
-  // OCR_ENABLED=false switches OCR off entirely, backup included.
-  if (!config.ocr.enabled || !config.fallback || !groqKey) return primary;
-  return new FallbackOcrProvider(primary, new GroqVisionOcrProvider(groqKey, config.fallback.visionModel));
+  if (config.fallback && groqKey) backups.push(new GroqVisionOcrProvider(groqKey, config.fallback.visionModel));
+  const openRouterKey = process.env.OPENROUTER_API_KEY;
+  if (config.secondFallback && openRouterKey) {
+    backups.push(new OpenRouterVisionOcrProvider(openRouterKey, config.secondFallback.visionModel));
+  }
+  return backups.length > 0 ? new FallbackOcrProvider(primary, backups) : primary;
 }

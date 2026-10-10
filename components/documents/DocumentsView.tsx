@@ -49,7 +49,14 @@ function LiveDocuments({ documents, maxUploadBytes }: DocumentsViewProps) {
 
   const process = async (documentId: string) => {
     setStage({ kind: "processing", documentId });
-    const res = await fetch(`/api/documents/${documentId}/process`, { method: "POST" });
+    let res: Response;
+    try {
+      res = await fetch(`/api/documents/${documentId}/process`, { method: "POST" });
+    } catch {
+      // Network failure: never leave the button stuck on "Reading the document…".
+      setStage({ kind: "error", message: "Could not reach the server. Check your connection.", documentId, retryable: true });
+      return;
+    }
     const body = (await res.json().catch(() => ({}))) as { error?: string; retryable?: boolean };
     if (res.ok) {
       router.push(`/documents/${documentId}/review`);
@@ -72,7 +79,13 @@ function LiveDocuments({ documents, maxUploadBytes }: DocumentsViewProps) {
     setStage({ kind: "uploading" });
     const form = new FormData();
     form.set("file", file);
-    const res = await fetch("/api/documents/upload", { method: "POST", body: form });
+    let res: Response;
+    try {
+      res = await fetch("/api/documents/upload", { method: "POST", body: form });
+    } catch {
+      setStage({ kind: "error", message: "Could not reach the server. Check your connection and try again." });
+      return;
+    }
     const body = (await res.json().catch(() => ({}))) as { error?: string; document?: { id: string } };
     if (!res.ok || !body.document) {
       setStage({ kind: "error", message: body.error ?? "Upload failed." });

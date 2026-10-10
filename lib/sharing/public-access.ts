@@ -9,14 +9,7 @@ import { DemoPatientRepository } from "@/lib/data/demo-repository";
 import type { PatientRepository } from "@/lib/data/repository";
 import { mapEmergencySettings, mapShareLink } from "@/lib/data/mappers";
 import type { Allergy, Condition, LabResult, Medication, ShareCategory, TimelineEvent } from "@/lib/data/types";
-import {
-  DEMO_EMERGENCY_ACCESS,
-  DEMO_EMERGENCY_TOKEN,
-  DEMO_PATIENT_ID,
-  DEMO_SHARE_PIN,
-  DEMO_SHARE_TOKEN,
-  demoShares,
-} from "@/lib/demo/data";
+import { datasetForPatient, publicDatasets, type DemoDataset } from "@/lib/demo/datasets";
 import { buildEmergencyView, type EmergencyView } from "./emergency-view";
 import { isLocked, PIN_ATTEMPTS_PER_WINDOW, shareState, type ShareState } from "./policy";
 import { getPublicAccessStore, type ClientInfo, type PublicAccessStore } from "./store";
@@ -24,7 +17,10 @@ import { clientIpFrom, hashClientIp, hashToken, TOKEN_PATTERN } from "./tokens";
 
 // Public (unauthenticated) access via share and emergency tokens.
 //
-// Demo mode: only the fixed demo tokens resolve, to fictional data.
+// Example datasets: fixed public tokens that resolve only to bundled,
+// read-only data. Demo mode: the fictional patient and the sample, and
+// nothing else. Real-user mode: the sample's tokens (which can never match a
+// real token: they are not TOKEN_PATTERN-shaped).
 // Real-user mode: tokens are looked up by SHA-256 hash; PINs are bcrypt
 // hashes checked after atomically reserving an attempt (5 per 15 minutes,
 // 20 per link); every attempt is logged to the patient's access history.
@@ -55,11 +51,27 @@ export function clientInfoFrom(headers: Headers): ClientInfo {
   };
 }
 
-function demoShare(): ResolvedShare {
-  const share = mapShareLink(demoShares().find((s) => s.id === "share-001")!);
+function exampleFor(token: string, which: "shareToken" | "emergencyToken"): DemoDataset | null {
+  return publicDatasets(getConfig().mode).find((d) => safeEqual(token, d.publicLinks[which])) ?? null;
+}
+
+/** True when the token is one of the fixed example links (labels the public page). */
+export function isExampleToken(token: string): boolean {
+  return exampleFor(token, "shareToken") !== null || exampleFor(token, "emergencyToken") !== null;
+}
+
+/** The public PIN of an example share link, shown on its PIN screen; null for real links. */
+export function examplePinFor(token: string): string | null {
+  return exampleFor(token, "shareToken")?.publicLinks.sharePin ?? null;
+}
+
+function exampleShare(dataset: DemoDataset): ResolvedShare | null {
+  const row = dataset.shares().find((s) => s.id === dataset.publicLinks.shareId);
+  if (!row) return null;
+  const share = mapShareLink(row);
   return {
     shareId: share.id,
-    patientId: DEMO_PATIENT_ID,
+    patientId: dataset.patient.user_id,
     state: shareState(share),
     locked: false,
     categories: share.categories,
@@ -70,10 +82,9 @@ function demoShare(): ResolvedShare {
 
 /** Null for unknown tokens. Expired, revoked and locked shares resolve so callers can log and explain. */
 export async function resolveShareToken(token: string, store?: PublicAccessStore): Promise<ResolvedShare | null> {
-  if (getConfig().mode === "demo") {
-    return safeEqual(token, DEMO_SHARE_TOKEN) ? demoShare() : null;
-  }
-  if (!TOKEN_PATTERN.test(token)) return null;
+  const example = exampleFor(token, "shareToken");
+  if (example) return exampleShare(example);
+  if (getConfig().mode === "demo" || !TOKEN_PATTERN.test(token)) return null;
   const row = await (store ?? getPublicAccessStore()).findShare(hashToken(token));
   if (!row) return null;
   return {
@@ -106,12 +117,13 @@ export async function verifySharePin(
   client: ClientInfo,
   store?: PublicAccessStore
 ): Promise<PinResult> {
-  if (getConfig().mode === "demo") {
-    // Demo only: the PIN is public and protects fictional data.
-    const share = safeEqual(token, DEMO_SHARE_TOKEN) ? demoShare() : null;
-    return share && share.state === "active" && safeEqual(pin, DEMO_SHARE_PIN) ? { ok: true, share } : INVALID;
+  const example = exampleFor(token, "shareToken");
+  if (example) {
+    // Example links only: the PIN is public and protects bundled read-only data.
+    const share = exampleShare(example);
+    return share && share.state === "active" && safeEqual(pin, example.publicLinks.sharePin) ? { ok: true, share } : INVALID;
   }
-  if (!TOKEN_PATTERN.test(token)) return INVALID;
+  if (getConfig().mode === "demo" || !TOKEN_PATTERN.test(token)) return INVALID;
 
   const db = store ?? getPublicAccessStore();
   const row = await db.findShare(hashToken(token));
@@ -177,7 +189,9 @@ export async function hasValidShareSession(share: ResolvedShare): Promise<boolea
 }
 
 function repositoryFor(patientId: string, store?: PublicAccessStore): PatientRepository {
-  if (getConfig().mode === "demo") return new DemoPatientRepository(patientId);
+  const mode = getConfig().mode;
+  const example = datasetForPatient(patientId);
+  if (mode === "demo" || (example && publicDatasets(mode).includes(example))) return new DemoPatientRepository(patientId);
   return (store ?? getPublicAccessStore()).repositoryFor(patientId);
 }
 
@@ -222,13 +236,15 @@ export async function openEmergencyLink(
   client: ClientInfo,
   store?: PublicAccessStore
 ): Promise<EmergencyView | null> {
-  const demo = getConfig().mode === "demo";
+  const example = exampleFor(token, "emergencyToken");
   let patientId: string;
   let settings;
-  if (demo) {
-    if (!safeEqual(token, DEMO_EMERGENCY_TOKEN)) return null;
-    patientId = DEMO_PATIENT_ID;
-    settings = mapEmergencySettings(DEMO_EMERGENCY_ACCESS);
+  if (example) {
+    if (!example.emergencyAccess) return null;
+    patientId = example.patient.user_id;
+    settings = mapEmergencySettings(example.emergencyAccess);
+  } else if (getConfig().mode === "demo") {
+    return null;
   } else {
     if (!TOKEN_PATTERN.test(token)) return null;
     const db = store ?? getPublicAccessStore();

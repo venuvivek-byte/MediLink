@@ -9,7 +9,7 @@ import { DEMO_SESSION_COOKIE, isPublicPath } from "@/lib/auth/constants";
  *
  * Responsibilities:
  * - Real-user mode: refresh the Supabase session cookie.
- * - Send visitors without a session to /login.
+ * - Send visitors without a session (Supabase user or demo/sample cookie) to /login.
  *
  * It deliberately does NOT redirect signed-in users away from /login (the
  * login page does that after verifying the session), so a stale or forged
@@ -28,8 +28,13 @@ export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   let hasSession = false;
 
+  // A demo cookie (fictional patient, or the read-only sample in either mode)
+  // is verified by the session layer; here its presence is enough. Real-user
+  // mode still refreshes the Supabase cookie below whatever this says.
+  const hasDemoCookie = request.cookies.has(DEMO_SESSION_COOKIE);
+
   if (config.mode === "demo") {
-    hasSession = request.cookies.has(DEMO_SESSION_COOKIE);
+    hasSession = hasDemoCookie;
   } else if (config.supabase) {
     const supabase = createServerClient(config.supabase.url, config.supabase.anonKey, {
       cookies: {
@@ -47,9 +52,9 @@ export async function proxy(request: NextRequest) {
     });
     try {
       const { data } = await supabase.auth.getUser();
-      hasSession = Boolean(data.user);
+      hasSession = Boolean(data.user) || hasDemoCookie;
     } catch {
-      hasSession = false;
+      hasSession = hasDemoCookie;
     }
   }
 

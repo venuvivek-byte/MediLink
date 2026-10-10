@@ -48,10 +48,13 @@ export function TimelineView({
   events,
   documentNames,
   live,
+  canOpenFiles,
 }: {
   events: TimelineEvent[];
   documentNames: Record<string, string>;
   live: boolean;
+  /** Original files can be opened (real accounts and the bundled sample). */
+  canOpenFiles: boolean;
 }) {
   const id = useId();
   const [filters, setFilters] = useState<TimelineFilters>(NO_FILTERS);
@@ -185,7 +188,7 @@ export function TimelineView({
                   </div>
                   {evt.summary && <p className="text-sm text-muted-foreground leading-relaxed">{evt.summary}</p>}
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <SourceLink source={sourceOf(evt, documentNames)} canOpen={live} />
+                    <SourceLink source={sourceOf(evt, documentNames)} canOpen={canOpenFiles} />
                     {live && <DeleteRecordButton kind="medical_event" id={evt.id} label={`the event "${evt.title}"`} />}
                   </div>
                 </CardContent>

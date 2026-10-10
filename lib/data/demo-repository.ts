@@ -1,16 +1,4 @@
-import {
-  DEMO_ACCESS_LOGS,
-  DEMO_ALLERGIES,
-  DEMO_AUDIT_LOGS,
-  DEMO_CONDITIONS,
-  DEMO_DOCUMENTS,
-  DEMO_EMERGENCY_ACCESS,
-  DEMO_LAB_RESULTS,
-  DEMO_MEDICAL_EVENTS,
-  DEMO_MEDICATIONS,
-  DEMO_PATIENT,
-  demoShares,
-} from "@/lib/demo/data";
+import { datasetForPatient, type DemoDataset } from "@/lib/demo/datasets";
 import {
   mapAccessLog,
   mapAllergy,
@@ -28,65 +16,70 @@ import type { PatientRepository } from "./repository";
 import { byDateDesc } from "./sort";
 
 /**
- * Fictional, in-memory data. Filters by patient id exactly like the database
- * does, so isolation behaviour can be tested without Supabase.
+ * Read-only, in-memory data (the fictional demo patient or the bundled
+ * sample). Filters by patient id exactly like the database does, so
+ * isolation behaviour can be tested without Supabase.
  */
 export class DemoPatientRepository implements PatientRepository {
   readonly source = "demo" as const;
+  private readonly data: DemoDataset | null;
 
-  constructor(private readonly patientId: string) {}
+  constructor(private readonly patientId: string) {
+    this.data = datasetForPatient(patientId);
+  }
 
-  private own<T extends { patient_id: string | null }>(rows: T[]): T[] {
-    return rows.filter((row) => row.patient_id === this.patientId);
+  private own<T extends { patient_id: string | null }>(pick: (d: DemoDataset) => T[]): T[] {
+    return this.data ? pick(this.data).filter((row) => row.patient_id === this.patientId) : [];
   }
 
   async getProfile() {
-    return DEMO_PATIENT.user_id === this.patientId ? mapProfile(DEMO_PATIENT) : null;
+    const patient = this.data?.patient;
+    return patient && patient.user_id === this.patientId ? mapProfile(patient) : null;
   }
 
   async listDocuments() {
-    return this.own(DEMO_DOCUMENTS).map(mapDocument).sort(byDateDesc((d) => d.documentDate ?? d.uploadedAt));
+    return this.own((d) => d.documents).map(mapDocument).sort(byDateDesc((d) => d.documentDate ?? d.uploadedAt));
   }
 
   async listTimelineEvents() {
-    return this.own(DEMO_MEDICAL_EVENTS).map(mapTimelineEvent).sort(byDateDesc((e) => e.eventDate));
+    return this.own((d) => d.events).map(mapTimelineEvent).sort(byDateDesc((e) => e.eventDate));
   }
 
   async listMedications() {
-    return this.own(DEMO_MEDICATIONS).map(mapMedication).sort(byDateDesc((m) => m.startDate));
+    return this.own((d) => d.medications).map(mapMedication).sort(byDateDesc((m) => m.startDate));
   }
 
   async listLabResults() {
-    return this.own(DEMO_LAB_RESULTS).map(mapLabResult).sort(byDateDesc((l) => l.testDate));
+    return this.own((d) => d.labResults).map(mapLabResult).sort(byDateDesc((l) => l.testDate));
   }
 
   async listConditions() {
-    return this.own(DEMO_CONDITIONS).map(mapCondition);
+    return this.own((d) => d.conditions).map(mapCondition);
   }
 
   async listAllergies() {
-    return this.own(DEMO_ALLERGIES).map(mapAllergy);
+    return this.own((d) => d.allergies).map(mapAllergy);
   }
 
   async listShareLinks() {
-    return this.own(demoShares()).map(mapShareLink).sort(byDateDesc((s) => s.createdAt));
+    return this.own((d) => d.shares()).map(mapShareLink).sort(byDateDesc((s) => s.createdAt));
   }
 
   async listAuditEvents() {
-    return this.own(DEMO_AUDIT_LOGS).map(mapAuditEvent).sort(byDateDesc((a) => a.occurredAt));
+    return this.own((d) => d.auditLogs).map(mapAuditEvent).sort(byDateDesc((a) => a.occurredAt));
   }
 
-  /** Demo mode is read-only: no decisions are ever stored. */
+  /** Demo data is read-only: no decisions are ever stored. */
   async listDuplicateDecisions() {
     return [];
   }
 
   async getEmergencySettings() {
-    return this.own([DEMO_EMERGENCY_ACCESS]).map(mapEmergencySettings)[0] ?? null;
+    return this.own((d) => (d.emergencyAccess ? [d.emergencyAccess] : [])).map(mapEmergencySettings)[0] ?? null;
   }
 
   async listAccessLogs() {
-    return this.own(DEMO_ACCESS_LOGS)
+    return this.own((d) => d.accessLogs)
       .map(mapAccessLog)
       .filter((e): e is NonNullable<typeof e> => e !== null)
       .sort(byDateDesc((e) => e.occurredAt));

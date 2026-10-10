@@ -41,6 +41,7 @@ npm run check                   # typecheck + lint + tests + build — run befor
 ```
 
 - `DEMO_MODE=true` runs with fictional data and no Supabase at all (read-only demo).
+- **"Try sample"** (landing page) works in BOTH modes: a read-only session on a bundled synthetic patient (Meera Krishnan, `lib/demo/sample/`). After editing `lib/demo/sample/data.ts`, regenerate its PDFs: `node --experimental-strip-types scripts/sample/generate-files.mjs` and commit `lib/demo/sample/files/`.
 - Live AI tests (opt-in, cost quota): `LIVE_AI=1 GEMINI_LIVE_MODELS=gemini-3.5-flash npx vitest run tests/live`
 - DB migrations: add a new numbered file in `supabase/migrations/`, then `npm run db:push` (the project owner runs this), then `npm run db:gen-types:linked` to regenerate `lib/types/database.types.ts`.
 
@@ -85,6 +86,7 @@ npm run check                   # typecheck + lint + tests + build — run befor
 | `lib/config/` | Validates env vars (`schema.ts`), never echoes secret values |
 | `lib/auth/session.ts` | The single place that decides who the patient is |
 | `lib/data/` | Data Access Layer: `PatientRepository` with Supabase and demo implementations; DTOs in `types.ts`; row→DTO `mappers.ts` |
+| `lib/demo/` | Read-only datasets: fictional patient (`data.ts`, DEMO_MODE only) and the synthetic "Try sample" patient (`sample/`, both modes). `datasets.ts` picks one by patient id; sample share/emergency links use fixed public tokens that only ever open bundled data. |
 | `lib/documents/service.ts` | Upload, processing pipeline (PDF text → OCR → AI → verify), review data, confirm/cancel |
 | `lib/ocr/` | OCR providers: `gemini.ts`, `groq.ts`, PaddleOCR + `FallbackOcrProvider` in `index.ts` |
 | `lib/ai/` | Extraction schema, prompt, providers (`gemini`, `openai`/`groq`), `verify.ts` (evidence check, `[illegible]` flag), `runExtractionWithFallback` |
@@ -151,6 +153,12 @@ A UI prototype ("Lost in Transit"/MediLink) where pages read demo data directly;
 
 ### UI redesign by a teammate (`a60d10b` … `216e96c`)
 Dashboard redesign, full-screen login landing page, navigation tweaks.
+
+### "Try sample" (pre-Phase 6)
+- Landing-page button opens a read-only session (signed `mhv_demo_session` cookie with `dataset: "sample"`) on a fully synthetic patient; no Supabase, no service-role key, nothing saved. Works on the live site next to real accounts.
+- Read-only is now decided per **session** (`session.kind === "demo"`), not per server mode: pages use `sessionAccess()`.
+- 13 synthetic source PDFs rendered from the same records (a test checks every lab value and medicine appears in its PDF); 18 months of labs for the trend charts; shows a duplicate-medicine alert, a repeat-test note, share links in every state, an emergency card and access history.
+- Lab results page now shows up to 6 trend charts (was 3) in a two-column grid.
 
 ## 8. Remaining work
 

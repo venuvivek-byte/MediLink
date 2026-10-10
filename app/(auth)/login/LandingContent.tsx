@@ -12,13 +12,16 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import type { AppMode } from "@/lib/config/schema";
 import { startDemoSessionAction } from "../actions";
+import { TrySampleButton } from "./TrySampleButton";
 
 interface LandingContentProps {
   mode: AppMode;
+  /** Shows "Try sample" (read-only bundled patient) when it has been generated. */
+  sampleAvailable: boolean;
   notice?: string;
 }
 
-export function LandingContent({ mode, notice }: LandingContentProps) {
+export function LandingContent({ mode, notice, sampleAvailable }: LandingContentProps) {
   const [isPending, startTransition] = useTransition();
 
   const handleGetStarted = () => {
@@ -156,7 +159,7 @@ export function LandingContent({ mode, notice }: LandingContentProps) {
         <p className="text-slate-600 max-w-lg mx-auto text-sm sm:text-base">
           All your medical records in one secure place. Simple, private, and 100% patient-owned.
         </p>
-        <div>
+        <div className="flex flex-wrap items-start justify-center gap-3 sm:gap-4">
           <button
             type="button"
             disabled={isPending}
@@ -175,7 +178,13 @@ export function LandingContent({ mode, notice }: LandingContentProps) {
               </>
             )}
           </button>
+          {sampleAvailable && <TrySampleButton className="bg-white border-slate-300 shadow-black/10" />}
         </div>
+        {sampleAvailable && (
+          <p className="text-xs text-slate-500">
+            &ldquo;Try sample&rdquo; opens a read-only example patient. No sign-in, nothing is saved.
+          </p>
+        )}
       </section>
 
       {/* ─── FOOTER ──────────────────────────────────────────────────────── */}

@@ -4,6 +4,7 @@ import Header from "@/components/layout/Header";
 import { DocumentsView } from "@/components/documents/DocumentsView";
 import { getPatientRepository } from "@/lib/data";
 import { getPublicConfig } from "@/lib/config/env";
+import { requireSession, sessionAccess } from "@/lib/auth/session";
 import { DEMO_SAMPLES } from "@/lib/demo/samples";
 
 export const metadata = { title: "Documents" };
@@ -20,7 +21,10 @@ export default function DocumentsPage() {
 
 async function DocumentsContent() {
   const documents = await (await getPatientRepository()).listDocuments();
-  const { mode, maxUploadBytes } = getPublicConfig();
+  const { maxUploadBytes } = getPublicConfig();
+  // Read-only is per session: the sample runs on the live site.
+  const mode = (await requireSession()).kind === "demo" ? "demo" : "live";
+  const { canOpenFiles } = await sessionAccess();
 
   return (
     <div className="flex-1 flex flex-col">
@@ -30,6 +34,7 @@ async function DocumentsContent() {
           documents={documents}
           mode={mode}
           maxUploadBytes={maxUploadBytes}
+          canOpenFiles={canOpenFiles}
           demoSamples={mode === "demo" ? DEMO_SAMPLES.map((s) => ({ id: s.id, title: s.title })) : []}
         />
       </div>

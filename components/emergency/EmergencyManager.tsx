@@ -235,7 +235,7 @@ export function EmergencyManager({ settings, url, medications, demo }: Emergency
       </div>
 
       {demo ? (
-        <p className="text-sm text-muted-foreground">Demo mode uses one fixed sample link; settings cannot be changed.</p>
+        <p className="text-sm text-muted-foreground">This read-only example has one fixed emergency link; settings cannot be changed.</p>
       ) : (
         <>
           <form

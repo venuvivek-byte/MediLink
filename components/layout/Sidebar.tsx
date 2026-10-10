@@ -19,7 +19,7 @@ interface SidebarProps {
 export default function Sidebar({ collapsed = false }: SidebarProps) {
   const pathname = usePathname();
   const handleSignOut = useSignOut();
-  const { mode } = useShell();
+  const { mode, sample } = useShell();
 
   return (
     <aside
@@ -61,7 +61,7 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
                 MediLink
               </span>
               <span className="text-xs font-medium text-slate-400">
-                {mode === "demo" ? "Health Vault (Demo)" : "Health Vault"}
+                {sample ? "Health Vault (Sample)" : mode === "demo" ? "Health Vault (Demo)" : "Health Vault"}
               </span>
             </div>
           )}

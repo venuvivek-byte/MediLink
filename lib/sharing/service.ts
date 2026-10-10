@@ -5,7 +5,7 @@ import { z } from "zod";
 import type { Session } from "@/lib/auth/session";
 import { getConfig, getSessionSecret } from "@/lib/config/env";
 import { createClient } from "@/lib/supabase/server";
-import { DEMO_EMERGENCY_TOKEN } from "@/lib/demo/data";
+import { datasetForPatient } from "@/lib/demo/datasets";
 import { EMERGENCY_EXPIRY_OPTIONS, SHAREABLE_CATEGORIES, SHARE_EXPIRY_OPTIONS } from "./policy";
 import { emergencyTokenFor, generatePin, generateShareToken, hashToken } from "./tokens";
 
@@ -147,10 +147,13 @@ export async function revokeEmergencyAccess(session: Session): Promise<ActionRes
   return error ? failure(error, "turn off emergency link") : { ok: true };
 }
 
-/** The responder URL for the patient's live emergency link (demo: the fixed demo link). */
+/** The responder URL for the patient's live emergency link (read-only sessions: their dataset's fixed link). */
 export function emergencyUrlFor(session: Session, emergencyAccessId: string): string {
   const { appUrl } = getConfig();
-  const token = session.kind === "demo" ? DEMO_EMERGENCY_TOKEN : emergencyTokenFor(emergencyAccessId, getSessionSecret());
+  const token =
+    session.kind === "demo"
+      ? (datasetForPatient(session.patientId)?.publicLinks.emergencyToken ?? "unavailable")
+      : emergencyTokenFor(emergencyAccessId, getSessionSecret());
   return `${appUrl}/emergency/${token}`;
 }
 

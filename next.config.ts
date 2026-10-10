@@ -12,6 +12,8 @@ const nextConfig: NextConfig = {
   // deployments (Vercel) would omit it unless it is listed explicitly.
   outputFileTracingIncludes: {
     "/api/documents/*/process": ["./node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs"],
+    // Original files of the read-only "Try sample" patient, read with fs at request time.
+    "/api/documents/*/file": ["./lib/demo/sample/files/**/*"],
   },
   turbopack: {
     rules: {

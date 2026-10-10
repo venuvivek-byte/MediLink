@@ -4,9 +4,8 @@ import MobileNav from "@/components/layout/MobileNav";
 import DemoModeBanner from "@/components/ui/DemoModeBanner";
 import { ShellProvider } from "@/components/layout/ShellContext";
 import { Skeleton } from "@/components/ui/skeleton";
-import { requireSession } from "@/lib/auth/session";
+import { isSampleSession, requireSession } from "@/lib/auth/session";
 import { getPatientRepository } from "@/lib/data";
-import { getPublicConfig } from "@/lib/config/env";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   // Reading the session is request-time work, so it must sit behind Suspense
@@ -21,16 +20,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 async function AuthenticatedShell({ children }: { children: React.ReactNode }) {
   const session = await requireSession();
   const profile = await (await getPatientRepository()).getProfile();
-  const { mode } = getPublicConfig();
+  // Read-only (demo or sample) is a property of the session, not the server:
+  // the sample runs on the live site next to real accounts.
+  const mode = session.kind === "demo" ? "demo" : "live";
+  const sample = isSampleSession(session);
   const displayName =
     profile?.displayName ?? (session.kind === "live" && session.email ? session.email : "Patient");
 
   return (
-    <ShellProvider value={{ displayName, bloodGroup: profile?.bloodGroup ?? null, mode }}>
+    <ShellProvider value={{ displayName, bloodGroup: profile?.bloodGroup ?? null, mode, sample }}>
       <div className="flex min-h-screen">
         <Sidebar />
         <div className="flex-1 flex flex-col md:ml-[260px] min-w-0">
-          {mode === "demo" && <DemoModeBanner />}
+          {mode === "demo" && <DemoModeBanner sample={sample} />}
           <main id="main" className="flex-1 pb-20 md:pb-0">
             {children}
           </main>

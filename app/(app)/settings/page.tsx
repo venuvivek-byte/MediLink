@@ -5,6 +5,7 @@ import Header from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPatientRepository } from "@/lib/data";
 import { getConfig } from "@/lib/config/env";
+import { requireSession } from "@/lib/auth/session";
 import { ProfileForm } from "@/components/settings/ProfileForm";
 
 export const metadata = { title: "Settings" };
@@ -22,18 +23,19 @@ export default function SettingsPage() {
 async function SettingsContent() {
   const profile = await (await getPatientRepository()).getProfile();
   const config = getConfig();
+  const readOnly = (await requireSession()).kind === "demo";
 
   // Reports configuration only. Nothing here claims a service is reachable.
   const status = [
     {
       label: "Data source",
-      value: config.mode === "demo" ? "Demo data (no database)" : "Supabase (configured)",
+      value: readOnly ? "Read-only example data (no database)" : "Supabase (configured)",
     },
     {
       label: "AI extraction",
       value:
-        config.mode === "demo"
-          ? "Simulated in demo mode"
+        readOnly
+          ? "Simulated (read-only session)"
           : config.ai.configured
             ? `${config.ai.provider} · ${config.ai.model}`
             : "Not configured",
@@ -41,8 +43,8 @@ async function SettingsContent() {
     {
       label: "Share and emergency links",
       value:
-        config.mode === "demo"
-          ? "Fixed demo links"
+        readOnly
+          ? "Fixed example links"
           : config.supabase?.serviceRoleKey
             ? "Enabled"
             : "Not available (SUPABASE_SERVICE_ROLE_KEY not set)",
@@ -69,7 +71,7 @@ async function SettingsContent() {
           </CardHeader>
           <CardContent>
             {profile ? (
-              <ProfileForm profile={profile} readOnly={config.mode === "demo"} />
+              <ProfileForm profile={profile} readOnly={readOnly} />
             ) : (
               <p className="text-sm text-muted-foreground">No profile yet.</p>
             )}

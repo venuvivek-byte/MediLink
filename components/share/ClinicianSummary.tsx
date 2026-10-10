@@ -28,7 +28,7 @@ export function ClinicianSummary(props: ClinicianSummaryProps) {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="font-bold text-lg">{patientName}</h1>
-              {isDemo && <Badge variant="outline">Demo · fictional patient</Badge>}
+              {isDemo && <Badge variant="outline">Example · not a real patient</Badge>}
             </div>
             <p className="text-sm text-muted-foreground">
               Read-only summary shared by the patient · access expires {formatDateTime(expiresAt)}

@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { getPublicConfig } from "@/lib/config/env";
+import { SAMPLE_DATASET } from "@/lib/demo/datasets";
 import { LandingHero } from "./LandingHero";
 import { LandingContent } from "./LandingContent";
 
@@ -34,13 +35,14 @@ async function LoginContent({ searchParams }: { searchParams: SearchParams }) {
   // Verifies the session properly (unlike the optimistic proxy check).
   if (await getSession()) redirect("/");
   const { mode } = getPublicConfig();
+  const sampleAvailable = SAMPLE_DATASET !== null;
   const errorKey = (await searchParams).error;
   const notice = typeof errorKey === "string" ? ERROR_MESSAGES[errorKey] : undefined;
 
   return (
     <div className="min-h-screen flex flex-col w-full overflow-x-hidden">
-      <LandingHero mode={mode} />
-      <LandingContent mode={mode} notice={notice} />
+      <LandingHero mode={mode} sampleAvailable={sampleAvailable} />
+      <LandingContent mode={mode} notice={notice} sampleAvailable={sampleAvailable} />
     </div>
   );
 }

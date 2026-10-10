@@ -22,7 +22,7 @@ function initialsOf(name: string): string {
 }
 
 export default function Header({ title, subtitle }: HeaderProps) {
-  const { displayName, mode } = useShell();
+  const { displayName, mode, sample } = useShell();
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between gap-4 px-4 sm:px-8 h-20 border-b border-slate-200/70 bg-white/80 backdrop-blur-md">
@@ -55,7 +55,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
             </div>
             <div className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              {mode === "demo" ? "Demo Patient" : "Verified Patient"}
+              {sample ? "Sample Patient" : mode === "demo" ? "Demo Patient" : "Verified Patient"}
             </div>
           </div>
         </Link>

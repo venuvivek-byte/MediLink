@@ -9,7 +9,7 @@ import { MedicationEditor } from "@/components/medications/MedicationEditor";
 import { DeleteRecordButton, NotDuplicateButton } from "@/components/records/RecordControls";
 import { SourceLink, sourceOf } from "@/components/records/SourceLink";
 import { getPatientRepository } from "@/lib/data";
-import { getPublicConfig } from "@/lib/config/env";
+import { sessionAccess } from "@/lib/auth/session";
 import type { Medication, MedicationStatus } from "@/lib/data/types";
 import { findDuplicateMedications } from "@/lib/domain/insights";
 import { formatDate } from "@/lib/format";
@@ -44,7 +44,7 @@ async function MedicationsContent() {
     repo.listDuplicateDecisions(),
     repo.listDocuments(),
   ]);
-  const live = getPublicConfig().mode === "live";
+  const { canEdit: live, canOpenFiles } = await sessionAccess();
   const documentNames = Object.fromEntries(documents.map((d) => [d.id, d.filename]));
   const duplicates = findDuplicateMedications(medications, decisions);
   const flagged = new Set(duplicates.flatMap((d) => d.records.map((r) => r.id)));
@@ -77,7 +77,7 @@ async function MedicationsContent() {
                     {r.strength ? ` · ${r.strength}` : ""}
                     {r.frequency ? ` · ${r.frequency}` : ""}
                   </span>
-                  <SourceLink source={sourceOf(r, documentNames)} canOpen={live} />
+                  <SourceLink source={sourceOf(r, documentNames)} canOpen={canOpenFiles} />
                 </li>
               ))}
             </ul>
@@ -120,6 +120,7 @@ async function MedicationsContent() {
                     med={med}
                     flagged={flagged.has(med.id)}
                     live={live}
+                    canOpenFiles={canOpenFiles}
                     documentNames={documentNames}
                   />
                 ))}
@@ -146,11 +147,13 @@ function MedicationCard({
   med,
   flagged,
   live,
+  canOpenFiles,
   documentNames,
 }: {
   med: Medication;
   flagged: boolean;
   live: boolean;
+  canOpenFiles: boolean;
   documentNames: Record<string, string>;
 }) {
   return (
@@ -202,7 +205,7 @@ function MedicationCard({
             {med.prescriberName ?? "Prescriber not stated"}
           </span>
         </div>
-        <SourceLink source={sourceOf(med, documentNames)} canOpen={live} />
+        <SourceLink source={sourceOf(med, documentNames)} canOpen={canOpenFiles} />
         {live && (
           <div className="flex flex-wrap items-start justify-between gap-2 pt-1 border-t">
             <MedicationEditor medication={med} />

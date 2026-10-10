@@ -88,7 +88,7 @@ export function ProfileForm({ profile, readOnly }: { profile: PatientProfile; re
         </p>
       )}
       {readOnly ? (
-        <p className="text-sm text-muted-foreground">Demo mode: the profile cannot be changed.</p>
+        <p className="text-sm text-muted-foreground">Read-only example: the profile cannot be changed.</p>
       ) : (
         <Button type="submit" size="sm" className="h-9 text-sm" disabled={pending}>
           {pending ? "Saving…" : "Save profile"}

@@ -3,7 +3,7 @@ import { PageSkeleton } from "@/components/layout/PageSkeleton";
 import Header from "@/components/layout/Header";
 import { TimelineView } from "@/components/timeline/TimelineView";
 import { getPatientRepository } from "@/lib/data";
-import { getPublicConfig } from "@/lib/config/env";
+import { sessionAccess } from "@/lib/auth/session";
 
 export const metadata = { title: "Timeline" };
 
@@ -21,12 +21,12 @@ async function TimelineContent() {
   const repo = await getPatientRepository();
   const [events, documents] = await Promise.all([repo.listTimelineEvents(), repo.listDocuments()]);
   const documentNames = Object.fromEntries(documents.map((d) => [d.id, d.filename]));
-  const live = getPublicConfig().mode === "live";
+  const { canEdit: live, canOpenFiles } = await sessionAccess();
   return (
     <div className="flex-1 flex flex-col">
       <Header title="Health timeline" subtitle="Your medical events in date order, linked to their source documents" />
       <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto w-full">
-        <TimelineView events={events} documentNames={documentNames} live={live} />
+        <TimelineView events={events} documentNames={documentNames} live={live} canOpenFiles={canOpenFiles} />
       </div>
     </div>
   );

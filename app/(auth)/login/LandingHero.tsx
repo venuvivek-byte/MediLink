@@ -7,12 +7,15 @@ import { ArrowRight, ChevronDown, Heart, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { AppMode } from "@/lib/config/schema";
 import { startDemoSessionAction } from "../actions";
+import { TrySampleButton } from "./TrySampleButton";
 
 interface LandingHeroProps {
   mode: AppMode;
+  /** Shows "Try sample" (read-only bundled patient) when it has been generated. */
+  sampleAvailable: boolean;
 }
 
-export function LandingHero({ mode }: LandingHeroProps) {
+export function LandingHero({ mode, sampleAvailable }: LandingHeroProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [hasScrolled, setHasScrolled] = useState(false);
@@ -101,8 +104,7 @@ export function LandingHero({ mode }: LandingHeroProps) {
             Every prescription, report, and medical visit. Organized, accessible, and always within reach.
           </p>
 
-          {/* Single "Get started" button placed at left below */}
-          <div className="pt-2 sm:pt-4">
+          <div className="pt-2 sm:pt-4 flex flex-wrap items-start gap-3 sm:gap-4">
             <button
               type="button"
               disabled={isPending}
@@ -124,6 +126,7 @@ export function LandingHero({ mode }: LandingHeroProps) {
                 </>
               )}
             </button>
+            {sampleAvailable && <TrySampleButton />}
           </div>
 
           {error && (

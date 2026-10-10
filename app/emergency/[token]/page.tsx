@@ -7,8 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmergencySummary } from "@/components/emergency/EmergencySummary";
 import { PublicNotice } from "@/components/share/PublicNotice";
-import { clientInfoFrom, openEmergencyLink } from "@/lib/sharing/public-access";
-import { getConfig } from "@/lib/config/env";
+import { clientInfoFrom, isExampleToken, openEmergencyLink } from "@/lib/sharing/public-access";
 
 export const metadata = { title: "Emergency information", robots: { index: false, follow: false } };
 
@@ -50,7 +49,7 @@ async function EmergencyContent({ params }: { params: Promise<{ token: string }>
           <p className="inline-flex items-center gap-2 text-destructive text-sm font-bold uppercase tracking-wider">
             <ShieldAlert className="w-4 h-4" aria-hidden="true" /> Emergency information
           </p>
-          {getConfig().mode === "demo" && <Badge variant="outline">Demo · fictional patient</Badge>}
+          {isExampleToken(token) && <Badge variant="outline">Example · not a real patient</Badge>}
           <p className="text-sm text-muted-foreground">
             Shared by the patient for emergencies. Patient-provided; not clinically verified.
           </p>

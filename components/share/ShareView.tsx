@@ -309,11 +309,11 @@ function DemoLink({ demo }: { demo: { url: string; pin: string } }) {
   return (
     <>
       <p className="text-sm text-muted-foreground">
-        Demo mode uses one fixed sample link and PIN for the fictional patient. Creating and revoking links needs a
-        real account.
+        This read-only example has one fixed share link and PIN, so you can see what a clinician sees. Creating and
+        revoking links needs a real account.
       </p>
       <Button onClick={() => setShow(true)} disabled={show} size="lg" className="px-3.5">
-        Show demo share link
+        Show example share link
       </Button>
       {show && (
         <div className="p-4 rounded-xl border border-health-emerald/30 bg-health-emerald/10 space-y-3">
@@ -321,15 +321,15 @@ function DemoLink({ demo }: { demo: { url: string; pin: string } }) {
             <span className="text-sm font-semibold flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-health-emerald" aria-hidden="true" /> Demo link
             </span>
-            <span className="text-sm font-mono bg-background px-2 py-0.5 rounded border">Demo PIN: {demo.pin}</span>
+            <span className="text-sm font-mono bg-background px-2 py-0.5 rounded border">PIN: {demo.pin}</span>
           </div>
           <div className="flex items-center gap-2">
-            <Input readOnly aria-label="Demo share link" value={demo.url} className="text-sm h-9 font-mono bg-background" />
-            <CopyButton value={demo.url} label="Copy demo share link" />
+            <Input readOnly aria-label="Example share link" value={demo.url} className="text-sm h-9 font-mono bg-background" />
+            <CopyButton value={demo.url} label="Copy example share link" />
           </div>
           <div className="flex items-center gap-4">
             <div className="p-2 bg-white rounded-lg border">
-              <QRCodeSVG value={demo.url} size={72} aria-label="QR code for the demo share link" />
+              <QRCodeSVG value={demo.url} size={72} aria-label="QR code for the example share link" />
             </div>
             <a href={demo.url} target="_blank" rel="noreferrer" className="text-sm text-primary underline">
               Open as a clinician

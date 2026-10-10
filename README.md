@@ -6,6 +6,7 @@
 
 Turn fragmented prescriptions, lab reports, and clinical documents into a unified, permanent, reviewable timeline that you own and control.
 
+[![Deployment](https://img.shields.io/badge/Hosted_App-myhealthvault--beryl.vercel.app-000000?style=flat&logo=vercel)](https://myhealthvault-beryl.vercel.app/)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16.4-black?style=flat&logo=next.js)](https://nextjs.org/)
 [![React 19](https://img.shields.io/badge/React-19.3-61dafb?style=flat&logo=react)](https://react.dev/)
 [![TypeScript 5](https://img.shields.io/badge/TypeScript-5.0-3178c6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
@@ -14,7 +15,9 @@ Turn fragmented prescriptions, lab reports, and clinical documents into a unifie
 [![Vitest](https://img.shields.io/badge/Tests-Vitest_(380%2B_passed)-fcc72b?style=flat&logo=vitest)](https://vitest.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](LICENSE)
 
-[Getting Started](#getting-started) • [Key Features](#key-features) • [Architecture](#architecture) • [Testing](#testing--quality-gates) • [Documentation](#documentation--support) • [Contributing](#contributing)
+🚀 **Live Production App**: [https://myhealthvault-beryl.vercel.app](https://myhealthvault-beryl.vercel.app/)
+
+[Live App](https://myhealthvault-beryl.vercel.app/) • [Getting Started](#getting-started) • [Key Features](#key-features) • [Architecture](#architecture) • [Testing](#testing--quality-gates) • [Documentation](#documentation--support) • [Contributing](#contributing)
 
 </div>
 
@@ -118,6 +121,9 @@ flowchart TD
 ---
 
 ## Getting Started
+
+> [!TIP]
+> **Try the Live App First**: Want to explore MediLink without setting up a local environment? Access the hosted production deployment at **[myhealthvault-beryl.vercel.app](https://myhealthvault-beryl.vercel.app/)**.
 
 ### Prerequisites
 

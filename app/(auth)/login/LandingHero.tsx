@@ -61,7 +61,7 @@ export function LandingHero({ mode }: LandingHeroProps) {
         <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/60 to-transparent sm:from-white/85 sm:via-white/35 sm:to-transparent lg:from-white/75 lg:via-white/20 lg:to-transparent" />
       </div>
 
-      {/* Top Navigation Bar */}
+      {/* Top Header */}
       <header className="relative z-20 flex items-center justify-between px-6 sm:px-12 lg:px-16 py-6 sm:py-8">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-vault-800 flex items-center justify-center text-white shadow-md shadow-emerald-950/20">
@@ -73,17 +73,6 @@ export function LandingHero({ mode }: LandingHeroProps) {
             </span>
           </div>
         </div>
-
-        <nav className="flex items-center">
-          <button
-            type="button"
-            disabled={isPending}
-            onClick={handleGetStarted}
-            className="px-5 py-2.5 rounded-full bg-white/90 hover:bg-white text-[#063326] text-xs sm:text-sm font-semibold shadow-xs hover:shadow-md transition-all cursor-pointer backdrop-blur-xs border border-white/70"
-          >
-            {isPending ? "Connecting…" : mode === "demo" ? "Explore Demo" : "Sign In"}
-          </button>
-        </nav>
       </header>
 
       {/* Main Hero Content Area (Left-Aligned, exactly matching the original design) */}

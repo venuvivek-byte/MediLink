@@ -14,6 +14,12 @@ export interface ReviewPayload {
   /** Page text was transcribed from an image by the AI (no separate OCR engine). */
   textReadByAi: boolean;
   /**
+   * The backup provider read or extracted it because the primary was
+   * unavailable. It is less reliable about marking unreadable text, so every
+   * entry needs the patient's explicit check.
+   */
+  readByBackup: boolean;
+  /**
    * How to show the original file next to the extracted entries:
    * images are shown inline (same-origin route); PDFs open in a new tab.
    * Null in demo mode (sample documents have no file).

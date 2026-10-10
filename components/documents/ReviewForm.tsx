@@ -45,12 +45,13 @@ interface Item {
 type Original = ReviewPayload["original"];
 
 /** Why an entry needs the patient's explicit decision, recomputed as they edit. */
-export function attentionFor(item: Pick<Item, "values" | "flags">, isMedication: boolean) {
+export function attentionFor(item: Pick<Item, "values" | "flags">, isMedication: boolean, strict = false) {
   const illegible = Object.values(item.values).some((v) => ILLEGIBLE_MARKER.test(v));
   const lookAlikes = isMedication ? lookAlikeNames(item.values.name ?? "") : [];
   // The server's illegible flag is replaced by the live check, so fixing the text clears it.
   const flags = item.flags.filter((f) => f !== "illegible_text");
-  return { flags, illegible, lookAlikes, needsDecision: item.flags.length > 0 || illegible || lookAlikes.length > 0 };
+  // strict: read by the backup provider, which does not reliably mark unreadable text.
+  return { flags, illegible, lookAlikes, needsDecision: strict || item.flags.length > 0 || illegible || lookAlikes.length > 0 };
 }
 
 const FLAG_TEXT: Record<ReviewFlag, string> = {
@@ -129,9 +130,9 @@ export function ReviewForm({ review, onConfirm, onCancel }: ReviewFormProps) {
   const flaggedCount = useMemo(
     () =>
       [...meds.map((i) => [i, true] as const), ...[...labs, ...conditions, ...allergies].map((i) => [i, false] as const)].filter(
-        ([i, isMed]) => attentionFor(i, isMed).needsDecision
+        ([i, isMed]) => attentionFor(i, isMed, review.readByBackup).needsDecision
       ).length,
-    [meds, labs, conditions, allergies]
+    [meds, labs, conditions, allergies, review.readByBackup]
   );
   // Every highlighted entry must be explicitly checked or removed before saving,
   // and nothing containing "[illegible]" can be saved at all.
@@ -139,11 +140,11 @@ export function ReviewForm({ review, onConfirm, onCancel }: ReviewFormProps) {
     () =>
       [...meds.map((i) => [i, true] as const), ...[...labs, ...conditions, ...allergies].map((i) => [i, false] as const)].filter(
         ([i, isMed]) => {
-          const a = attentionFor(i, isMed);
+          const a = attentionFor(i, isMed, review.readByBackup);
           return a.illegible || (a.needsDecision && !i.checked);
         }
       ).length,
-    [meds, labs, conditions, allergies]
+    [meds, labs, conditions, allergies, review.readByBackup]
   );
   const [view, setView] = useState<"original" | "text">(review.original?.kind === "image" ? "original" : "text");
 
@@ -211,6 +212,13 @@ export function ReviewForm({ review, onConfirm, onCancel }: ReviewFormProps) {
               your records until you confirm. Confirmed entries are marked &quot;patient-reviewed&quot;, which is not a
               clinical verification.
             </p>
+            {review.readByBackup && (
+              <p role="note" className="text-sm font-medium text-health-amber flex items-start gap-1.5">
+                <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+                The main reading service was unavailable, so a backup service read this document. The backup does not
+                reliably mark words it cannot read, so every entry needs your check against the original.
+              </p>
+            )}
             {review.textReadByAi && (
               <p role="note" className="text-sm font-medium text-health-amber flex items-start gap-1.5">
                 <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -267,10 +275,10 @@ export function ReviewForm({ review, onConfirm, onCancel }: ReviewFormProps) {
           </CardContent>
         </Card>
 
-        <ItemSection title="Medications" fields={MED_FIELDS} items={meds} setItems={setMeds} onShowPage={setActivePage} original={review.original} withStatus />
-        <ItemSection title="Lab results" fields={LAB_FIELDS} items={labs} setItems={setLabs} onShowPage={setActivePage} original={review.original} />
-        <ItemSection title="Conditions / diagnoses" fields={CONDITION_FIELDS} items={conditions} setItems={setConditions} onShowPage={setActivePage} original={review.original} />
-        <ItemSection title="Allergies" fields={ALLERGY_FIELDS} items={allergies} setItems={setAllergies} onShowPage={setActivePage} original={review.original} />
+        <ItemSection title="Medications" fields={MED_FIELDS} items={meds} setItems={setMeds} onShowPage={setActivePage} original={review.original} strict={review.readByBackup} withStatus />
+        <ItemSection title="Lab results" fields={LAB_FIELDS} items={labs} setItems={setLabs} onShowPage={setActivePage} original={review.original} strict={review.readByBackup} />
+        <ItemSection title="Conditions / diagnoses" fields={CONDITION_FIELDS} items={conditions} setItems={setConditions} onShowPage={setActivePage} original={review.original} strict={review.readByBackup} />
+        <ItemSection title="Allergies" fields={ALLERGY_FIELDS} items={allergies} setItems={setAllergies} onShowPage={setActivePage} original={review.original} strict={review.readByBackup} />
 
         {error && (
           <p role="alert" className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
@@ -436,6 +444,7 @@ function ItemSection({
   setItems,
   onShowPage,
   original,
+  strict,
   withStatus = false,
 }: {
   title: string;
@@ -444,6 +453,7 @@ function ItemSection({
   setItems: React.Dispatch<React.SetStateAction<Item[]>>;
   onShowPage: (page: number) => void;
   original: Original;
+  strict: boolean;
   withStatus?: boolean;
 }) {
   const [showOriginal, setShowOriginal] = useState<Record<string, boolean>>({});
@@ -460,7 +470,7 @@ function ItemSection({
       <CardContent className="space-y-4">
         {items.length === 0 && <p className="text-sm text-muted-foreground">None found.</p>}
         {items.map((item, index) => {
-          const attention = attentionFor(item, withStatus);
+          const attention = attentionFor(item, withStatus, strict);
           const open = attention.illegible || (attention.needsDecision && !item.checked);
           const originalShown = showOriginal[item.uid] ?? open;
           return (

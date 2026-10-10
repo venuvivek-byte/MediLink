@@ -6,6 +6,7 @@ import { extractionSchema, EXTRACTION_SCHEMA_VERSION } from "./extraction-schema
 import { verifyExtraction, type VerifiedExtraction } from "./verify";
 import { GeminiExtractionProvider } from "./providers/gemini";
 import { OpenAIExtractionProvider } from "./providers/openai";
+import { isDocumentError } from "@/lib/documents/errors";
 import { ProviderError, type ExtractionProvider } from "./providers/types";
 
 export const AI_TIMEOUT_MS = 60_000;
@@ -19,6 +20,13 @@ export function getConfiguredProvider(config: AppConfig): ExtractionProvider | n
   if (config.ai.provider === "gemini") return new GeminiExtractionProvider(key, config.ai.model);
   if (config.ai.provider === "openai") return new OpenAIExtractionProvider(key, config.ai.model);
   return null;
+}
+
+/** The backup provider (Groq), or null when GROQ_API_KEY is not set. */
+export function getFallbackProvider(config: AppConfig): ExtractionProvider | null {
+  const key = process.env.GROQ_API_KEY;
+  if (!config.fallback || !key) return null;
+  return new OpenAIExtractionProvider(key, config.fallback.model, "groq");
 }
 
 export interface ExtractionOutcome {
@@ -73,4 +81,25 @@ export async function runExtraction(
     verified: verifyExtraction(parsed.data, pages),
     raw: parsed.data,
   };
+}
+
+/**
+ * Runs the primary provider; only if it is UNAVAILABLE (quota, outage,
+ * timeouts after its own retries) does the backup run. Invalid output and
+ * configuration errors are never retried on another provider: they would
+ * hide a real problem. The outcome records which provider produced it.
+ */
+export async function runExtractionWithFallback(
+  primary: ExtractionProvider,
+  fallback: ExtractionProvider | null,
+  pages: PageText[],
+  options?: Parameters<typeof runExtraction>[2]
+): Promise<ExtractionOutcome> {
+  try {
+    return await runExtraction(primary, pages, options);
+  } catch (error) {
+    if (!fallback || !isDocumentError(error) || error.code !== "ai_unavailable") throw error;
+    console.warn(`[ai] ${primary.name} unavailable; using backup ${fallback.name}`);
+    return runExtraction(fallback, pages, options);
+  }
 }

@@ -2,9 +2,10 @@ import "server-only";
 import type { Session } from "@/lib/auth/session";
 import { getConfig } from "@/lib/config/env";
 import { createClient } from "@/lib/supabase/server";
-import { getConfiguredProvider, runExtraction } from "@/lib/ai";
+import { getConfiguredProvider, getFallbackProvider, runExtractionWithFallback } from "@/lib/ai";
 import { getOcrProvider } from "@/lib/ocr";
 import { GEMINI_VISION_OCR } from "@/lib/ocr/gemini";
+import { GROQ_VISION_OCR } from "@/lib/ocr/groq";
 import { EXTRACTION_SCHEMA_VERSION } from "@/lib/ai/extraction-schema";
 import { buildDocumentPath, DOCUMENTS_BUCKET } from "@/lib/storage/paths";
 import { mapDocument } from "@/lib/data/mappers";
@@ -113,18 +114,20 @@ interface SourcedPage extends PageText {
   source: "pdf_text" | "ocr";
   /** OCR engine confidence (0..1); null for embedded PDF text. */
   confidence: number | null;
+  /** OCR provider that read this page (null for embedded PDF text). */
+  engine: string | null;
 }
 
 async function readPages(bytes: Uint8Array, mimeType: string): Promise<{ pages: SourcedPage[]; pageCount: number }> {
   const ocr = getOcrProvider(getConfig());
   if (mimeType === "application/pdf") {
     const pdf = await extractPdfText(bytes);
-    let pages: SourcedPage[] = pdf.textPages.map((p) => ({ ...p, source: "pdf_text", confidence: null }));
+    let pages: SourcedPage[] = pdf.textPages.map((p) => ({ ...p, source: "pdf_text", confidence: null, engine: null }));
     if (pdf.pagesNeedingOcr.length > 0) {
       // Never silently drop pages: if any page needs OCR and OCR is not
       // available, the whole document fails with a clear reason.
       const ocrPages = await ocr.recognize({ bytes, mimeType, pages: pdf.pagesNeedingOcr });
-      pages = [...pages, ...ocrPages.map((p): SourcedPage => ({ pageNumber: p.pageNumber, text: p.text, source: "ocr", confidence: p.confidence }))].sort(
+      pages = [...pages, ...ocrPages.map((p): SourcedPage => ({ pageNumber: p.pageNumber, text: p.text, source: "ocr", confidence: p.confidence, engine: p.engine ?? ocr.name }))].sort(
         (a, b) => a.pageNumber - b.pageNumber
       );
     }
@@ -132,7 +135,7 @@ async function readPages(bytes: Uint8Array, mimeType: string): Promise<{ pages: 
   }
   const ocrPages = await ocr.recognize({ bytes, mimeType });
   return {
-    pages: ocrPages.map((p): SourcedPage => ({ pageNumber: p.pageNumber, text: p.text, source: "ocr", confidence: p.confidence })),
+    pages: ocrPages.map((p): SourcedPage => ({ pageNumber: p.pageNumber, text: p.text, source: "ocr", confidence: p.confidence, engine: p.engine ?? ocr.name })),
     pageCount: 1,
   };
 }
@@ -221,7 +224,8 @@ export async function processDocument(session: Session, documentId: string): Pro
         status: "pending",
         schema_version: EXTRACTION_SCHEMA_VERSION,
         text_source: usedOcr && usedPdfText ? "mixed" : usedOcr ? "ocr" : "pdf_text",
-        ocr_provider: usedOcr ? getOcrProvider(config).name : null,
+        // The provider that actually read the pages (the backup, if it was used).
+        ocr_provider: usedOcr ? [...new Set(pages.flatMap((p) => (p.engine ? [p.engine] : [])))].join("+").slice(0, 50) : null,
         ai_provider: provider.name,
         ai_model: provider.model,
         is_simulated: provider.isSimulated,
@@ -231,13 +235,16 @@ export async function processDocument(session: Session, documentId: string): Pro
     if (extractionError || !extraction) throw new DocumentError("storage_failed", true);
     extractionId = extraction.id;
 
-    const outcome = await runExtraction(provider, pages);
+    const outcome = await runExtractionWithFallback(provider, getFallbackProvider(config), pages);
 
     await supabase
       .from("document_extractions")
       .update({
         status: "succeeded",
         output: { verified: outcome.verified } as never,
+        // Records the backup provider when the primary was unavailable.
+        ai_provider: outcome.provider,
+        ai_model: outcome.model,
         completed_at: new Date().toISOString(),
       })
       .eq("id", extractionId);
@@ -253,6 +260,9 @@ export async function processDocument(session: Session, documentId: string): Pro
   }
 }
 
+/** OCR providers that are AI models transcribing an image (no engine confidence). */
+const AI_VISION_OCR = [GEMINI_VISION_OCR, GROQ_VISION_OCR];
+
 export interface ReviewData {
   extractionId: string;
   document: DocumentSummary;
@@ -262,6 +272,8 @@ export interface ReviewData {
   model: string;
   isSimulated: boolean;
   textReadByAi: boolean;
+  /** The backup provider read or extracted this document (primary was unavailable). */
+  readByBackup: boolean;
 }
 
 /** The latest extraction awaiting the patient's review, with its source text. */
@@ -299,7 +311,8 @@ export async function getReviewData(session: Session, documentId: string): Promi
     provider: extraction.ai_provider ?? "unknown",
     model: extraction.ai_model ?? "unknown",
     isSimulated: extraction.is_simulated,
-    textReadByAi: extraction.ocr_provider === GEMINI_VISION_OCR,
+    textReadByAi: AI_VISION_OCR.some((name) => extraction.ocr_provider?.includes(name)),
+    readByBackup: Boolean(extraction.ocr_provider?.includes(GROQ_VISION_OCR)) || extraction.ai_provider === "groq",
   };
 }
 

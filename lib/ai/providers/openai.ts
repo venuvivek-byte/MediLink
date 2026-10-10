@@ -4,20 +4,23 @@ import { extractionJsonSchema } from "../extraction-schema";
 import { buildUserPrompt, SYSTEM_INSTRUCTION } from "../prompt";
 import { classifyHttpStatus, ProviderError, type ExtractionProvider, type ExtractionRequest } from "./types";
 
+/** Groq serves an OpenAI-compatible API; only the address and the key differ. */
+export const GROQ_BASE_URL = "https://api.groq.com/openai/v1";
+
 /**
- * OpenAI alternative behind the same interface. Covered by unit tests with a
- * mocked client only; not verified against the live API (no key configured).
+ * OpenAI-compatible chat completions behind the same interface: OpenAI
+ * itself, or Groq (the backup when the primary provider is unavailable).
  */
 export class OpenAIExtractionProvider implements ExtractionProvider {
-  readonly name = "openai" as const;
   readonly isSimulated = false;
   private readonly client: OpenAI;
 
   constructor(
     apiKey: string,
-    readonly model: string
+    readonly model: string,
+    readonly name: "openai" | "groq" = "openai"
   ) {
-    this.client = new OpenAI({ apiKey });
+    this.client = new OpenAI({ apiKey, ...(name === "groq" ? { baseURL: GROQ_BASE_URL } : {}) });
   }
 
   async extract({ pages, signal }: ExtractionRequest): Promise<unknown> {
@@ -41,13 +44,13 @@ export class OpenAIExtractionProvider implements ExtractionProvider {
       text = response.choices[0]?.message?.content;
     } catch (error) {
       const status = (error as { status?: number }).status;
-      throw new ProviderError(classifyHttpStatus(status), "OpenAI request failed", status);
+      throw new ProviderError(classifyHttpStatus(status), `${this.name} request failed`, status);
     }
-    if (!text) throw new ProviderError("invalid_output", "OpenAI returned no content");
+    if (!text) throw new ProviderError("invalid_output", `${this.name} returned no content`);
     try {
       return JSON.parse(text);
     } catch {
-      throw new ProviderError("invalid_output", "OpenAI returned non-JSON output");
+      throw new ProviderError("invalid_output", `${this.name} returned non-JSON output`);
     }
   }
 }

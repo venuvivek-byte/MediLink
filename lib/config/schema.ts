@@ -38,8 +38,18 @@ export interface AppConfig {
     /** Shared secret sent to the OCR service. Never exposed to the client. */
     serviceToken: string | null;
   };
+  /**
+   * Backup used only when the primary OCR/AI is unavailable (quota, outage,
+   * timeout). Null when GROQ_API_KEY is not set. The key itself is read from
+   * process.env by the provider, never stored here.
+   */
+  fallback: { provider: "groq"; model: string; visionModel: string } | null;
   upload: { maxBytes: number };
 }
+
+/** Defaults checked against Groq's model list on 2026-10-10; override with GROQ_MODEL / GROQ_VISION_MODEL. */
+export const GROQ_DEFAULT_MODEL = "openai/gpt-oss-120b";
+export const GROQ_DEFAULT_VISION_MODEL = "qwen/qwen3.8-27b";
 
 const PLACEHOLDER_PATTERN = /^(your[-_]|<|changeme|placeholder)|your-project/i;
 
@@ -76,6 +86,9 @@ const rawEnvSchema = z.object({
   OCR_PROVIDER: optionalString,
   OCR_SERVICE_URL: optionalString,
   OCR_SERVICE_TOKEN: optionalString,
+  GROQ_API_KEY: optionalString,
+  GROQ_MODEL: optionalString,
+  GROQ_VISION_MODEL: optionalString,
   MAX_UPLOAD_SIZE_MB: optionalString,
 });
 
@@ -223,6 +236,13 @@ export function parseConfig(env: Record<string, string | undefined>): AppConfig 
       serviceUrl: raw.OCR_SERVICE_URL ?? null,
       serviceToken: raw.OCR_SERVICE_TOKEN ?? null,
     },
+    fallback: raw.GROQ_API_KEY
+      ? {
+          provider: "groq",
+          model: raw.GROQ_MODEL ?? GROQ_DEFAULT_MODEL,
+          visionModel: raw.GROQ_VISION_MODEL ?? GROQ_DEFAULT_VISION_MODEL,
+        }
+      : null,
     upload: { maxBytes: Math.floor(maxUploadMb * 1024 * 1024) },
   };
 }

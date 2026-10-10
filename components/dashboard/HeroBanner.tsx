@@ -124,9 +124,7 @@ export function HeroBanner({ displayName }: HeroBannerProps) {
             A clearer picture of your health journey
           </h1>
           <p className="text-base text-slate-600 mb-6 sm:mb-8 font-normal max-w-md">
-            {displayName
-              ? `Welcome back, ${displayName}. All your medical records, organized in one secure place.`
-              : "All your medical records, in one secure place."}
+            {displayName ? `Welcome back, ${displayName}.` : "Welcome back."}
           </p>
           <div className="flex items-center gap-4">
             <Link

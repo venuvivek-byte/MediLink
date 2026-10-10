@@ -45,6 +45,9 @@ async function ReviewContent({ params }: { params: Promise<{ id: string }> }) {
               model: data.model,
               isSimulated: data.isSimulated,
               textReadByAi: data.textReadByAi,
+              original: data.document.mimeType.startsWith("image/")
+                ? { kind: "image", url: `/api/documents/${id}/original` }
+                : { kind: "pdf", url: `/api/documents/${id}/file` },
             }}
           />
         ) : (

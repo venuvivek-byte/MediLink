@@ -13,4 +13,10 @@ export interface ReviewPayload {
   isSimulated: boolean;
   /** Page text was transcribed from an image by the AI (no separate OCR engine). */
   textReadByAi: boolean;
+  /**
+   * How to show the original file next to the extracted entries:
+   * images are shown inline (same-origin route); PDFs open in a new tab.
+   * Null in demo mode (sample documents have no file).
+   */
+  original: { kind: "image" | "pdf"; url: string } | null;
 }

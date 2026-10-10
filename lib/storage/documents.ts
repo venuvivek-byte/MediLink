@@ -42,3 +42,38 @@ export async function createDocumentDownloadUrl(session: Session, documentId: st
 
   return { ok: true, url: signed.signedUrl, filename: doc.original_filename, mimeType: doc.mime_type };
 }
+
+export type ImageResult =
+  | { ok: true; bytes: Uint8Array; mimeType: "image/jpeg" | "image/png" }
+  | { ok: false; reason: "not_found" | "not_image" | "unavailable" };
+
+/**
+ * The bytes of one of the CURRENT patient's uploaded photos/scans, so the
+ * review screen can show the original next to what was read from it. Served
+ * from this origin (the CSP does not allow images from the storage domain).
+ * Same three authorisation checks as createDocumentDownloadUrl.
+ */
+export async function readDocumentImage(session: Session, documentId: string): Promise<ImageResult> {
+  if (session.kind !== "live") return { ok: false, reason: "not_found" };
+
+  const supabase = await createClient();
+  const { data: doc, error } = await supabase
+    .from("documents")
+    .select("storage_path, mime_type")
+    .eq("id", documentId)
+    .eq("patient_id", session.patientId)
+    .maybeSingle();
+  if (error) {
+    console.error("[storage] document lookup failed", { code: error.code ?? "unknown" });
+    return { ok: false, reason: "unavailable" };
+  }
+  if (!doc || !isOwnedPath(doc.storage_path, session.patientId)) return { ok: false, reason: "not_found" };
+  if (doc.mime_type !== "image/jpeg" && doc.mime_type !== "image/png") return { ok: false, reason: "not_image" };
+
+  const { data: blob, error: downloadError } = await supabase.storage.from(DOCUMENTS_BUCKET).download(doc.storage_path);
+  if (downloadError || !blob) {
+    console.error("[storage] download failed");
+    return { ok: false, reason: "unavailable" };
+  }
+  return { ok: true, bytes: new Uint8Array(await blob.arrayBuffer()), mimeType: doc.mime_type };
+}

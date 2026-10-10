@@ -13,7 +13,7 @@ import type { VerifiedExtraction } from "@/lib/ai/verify";
 import { DocumentError, isDocumentError, type DocumentErrorCode } from "./errors";
 import { validateUpload } from "./file-validation";
 import { extractPdfText, type PageText } from "./pdf-text";
-import { reviewSubmissionSchema } from "./review-schema";
+import { ILLEGIBLE_ERROR, reviewSubmissionSchema } from "./review-schema";
 
 // Real-user document workflow. Every call runs as the signed-in patient
 // through RLS; the service never uses the service-role key.
@@ -308,7 +308,15 @@ export type ConfirmResult = { ok: true } | { ok: false; error: string };
 export async function confirmReview(session: Session, submission: unknown): Promise<ConfirmResult> {
   requireLive(session);
   const parsed = reviewSubmissionSchema.safeParse(submission);
-  if (!parsed.success) return { ok: false, error: "Some fields are invalid. Check the highlighted entries and try again." };
+  if (!parsed.success) {
+    const illegible = parsed.error.issues.some((i) => i.message === ILLEGIBLE_ERROR);
+    return {
+      ok: false,
+      error: illegible
+        ? "Some entries still contain [illegible]. Type what the document says, or remove the entry, before confirming."
+        : "Some fields are invalid. Check the highlighted entries and try again.",
+    };
+  }
   const { extractionId, ...review } = parsed.data;
 
   const supabase = await createClient();

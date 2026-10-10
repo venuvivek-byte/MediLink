@@ -1,13 +1,25 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { AlertTriangle, CheckCircle2, FileText, FlaskConical, HelpCircle, Trash2, X } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ExternalLink,
+  FileText,
+  FlaskConical,
+  HelpCircle,
+  Image as ImageIcon,
+  Trash2,
+  Undo2,
+  X,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { ReviewFlag } from "@/lib/ai/verify";
+import { ILLEGIBLE_MARKER, type ReviewFlag } from "@/lib/ai/verify";
+import { lookAlikeNames } from "@/lib/domain/lookalike";
 import type { ReviewPayload } from "@/lib/documents/review-payload";
 import type { ReviewSubmission } from "@/lib/documents/review-schema";
 
@@ -26,6 +38,19 @@ interface Item {
   page: number;
   quote: string;
   status?: Status;
+  /** Set when the patient explicitly checked a highlighted entry against the original. */
+  checked: boolean;
+}
+
+type Original = ReviewPayload["original"];
+
+/** Why an entry needs the patient's explicit decision, recomputed as they edit. */
+export function attentionFor(item: Pick<Item, "values" | "flags">, isMedication: boolean) {
+  const illegible = Object.values(item.values).some((v) => ILLEGIBLE_MARKER.test(v));
+  const lookAlikes = isMedication ? lookAlikeNames(item.values.name ?? "") : [];
+  // The server's illegible flag is replaced by the live check, so fixing the text clears it.
+  const flags = item.flags.filter((f) => f !== "illegible_text");
+  return { flags, illegible, lookAlikes, needsDecision: item.flags.length > 0 || illegible || lookAlikes.length > 0 };
 }
 
 const FLAG_TEXT: Record<ReviewFlag, string> = {
@@ -33,6 +58,7 @@ const FLAG_TEXT: Record<ReviewFlag, string> = {
   value_not_found: "This value does not appear in the document",
   page_not_found: "Cited page does not exist",
   model_uncertain: "AI marked this as uncertain",
+  illegible_text: "Part of this could not be read",
 };
 
 const MED_FIELDS: Field[] = [
@@ -69,6 +95,7 @@ function toItems<T extends { evidence: { page: number; quote: string } }>(
     flags,
     page: item.evidence.page,
     quote: item.evidence.quote,
+    checked: false,
   }));
 }
 
@@ -100,9 +127,25 @@ export function ReviewForm({ review, onConfirm, onCancel }: ReviewFormProps) {
   const dateAmbiguous = v.ambiguousDates.includes("document_date");
 
   const flaggedCount = useMemo(
-    () => [...meds, ...labs, ...conditions, ...allergies].filter((i) => i.flags.length > 0).length,
+    () =>
+      [...meds.map((i) => [i, true] as const), ...[...labs, ...conditions, ...allergies].map((i) => [i, false] as const)].filter(
+        ([i, isMed]) => attentionFor(i, isMed).needsDecision
+      ).length,
     [meds, labs, conditions, allergies]
   );
+  // Every highlighted entry must be explicitly checked or removed before saving,
+  // and nothing containing "[illegible]" can be saved at all.
+  const unresolved = useMemo(
+    () =>
+      [...meds.map((i) => [i, true] as const), ...[...labs, ...conditions, ...allergies].map((i) => [i, false] as const)].filter(
+        ([i, isMed]) => {
+          const a = attentionFor(i, isMed);
+          return a.illegible || (a.needsDecision && !i.checked);
+        }
+      ).length,
+    [meds, labs, conditions, allergies]
+  );
+  const [view, setView] = useState<"original" | "text">(review.original?.kind === "image" ? "original" : "text");
 
   const submit = () => {
     setError(null);
@@ -224,18 +267,24 @@ export function ReviewForm({ review, onConfirm, onCancel }: ReviewFormProps) {
           </CardContent>
         </Card>
 
-        <ItemSection title="Medications" fields={MED_FIELDS} items={meds} setItems={setMeds} onShowPage={setActivePage} withStatus />
-        <ItemSection title="Lab results" fields={LAB_FIELDS} items={labs} setItems={setLabs} onShowPage={setActivePage} />
-        <ItemSection title="Conditions / diagnoses" fields={CONDITION_FIELDS} items={conditions} setItems={setConditions} onShowPage={setActivePage} />
-        <ItemSection title="Allergies" fields={ALLERGY_FIELDS} items={allergies} setItems={setAllergies} onShowPage={setActivePage} />
+        <ItemSection title="Medications" fields={MED_FIELDS} items={meds} setItems={setMeds} onShowPage={setActivePage} original={review.original} withStatus />
+        <ItemSection title="Lab results" fields={LAB_FIELDS} items={labs} setItems={setLabs} onShowPage={setActivePage} original={review.original} />
+        <ItemSection title="Conditions / diagnoses" fields={CONDITION_FIELDS} items={conditions} setItems={setConditions} onShowPage={setActivePage} original={review.original} />
+        <ItemSection title="Allergies" fields={ALLERGY_FIELDS} items={allergies} setItems={setAllergies} onShowPage={setActivePage} original={review.original} />
 
         {error && (
           <p role="alert" className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
             {error}
           </p>
         )}
+        {unresolved > 0 && (
+          <p role="status" className="text-sm font-medium text-health-amber flex items-center gap-1.5">
+            <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+            {unresolved} highlighted entr{unresolved === 1 ? "y needs" : "ies need"} your decision before you can confirm.
+          </p>
+        )}
         <div className="flex flex-wrap gap-3">
-          <Button onClick={submit} disabled={pending} className="gap-1.5">
+          <Button onClick={submit} disabled={pending || unresolved > 0} className="gap-1.5">
             <CheckCircle2 className="w-4 h-4" aria-hidden="true" /> {pending ? "Saving…" : "Confirm and add to my records"}
           </Button>
           <Button variant="outline" onClick={() => startTransition(async () => onCancel())} disabled={pending} className="gap-1.5">
@@ -268,11 +317,41 @@ export function ReviewForm({ review, onConfirm, onCancel }: ReviewFormProps) {
               </div>
             )}
           </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground mb-2">Text read from the document (page {activePage}).</p>
-            <pre className="whitespace-pre-wrap text-sm font-mono bg-muted/40 rounded-lg p-3 max-h-[60vh] overflow-auto">
-              {page?.text || "No text on this page."}
-            </pre>
+          <CardContent className="space-y-2">
+            {review.original && (
+              <div role="tablist" aria-label="View" className="flex gap-1">
+                <Button
+                  role="tab"
+                  aria-selected={view === "original"}
+                  size="sm"
+                  variant={view === "original" ? "default" : "outline"}
+                  className="h-9 text-sm gap-1"
+                  onClick={() => setView("original")}
+                >
+                  <ImageIcon className="w-3.5 h-3.5" aria-hidden="true" /> Original
+                </Button>
+                <Button
+                  role="tab"
+                  aria-selected={view === "text"}
+                  size="sm"
+                  variant={view === "text" ? "default" : "outline"}
+                  className="h-9 text-sm gap-1"
+                  onClick={() => setView("text")}
+                >
+                  <FileText className="w-3.5 h-3.5" aria-hidden="true" /> Text read
+                </Button>
+              </div>
+            )}
+            {review.original && view === "original" ? (
+              <OriginalView original={review.original} page={activePage} large />
+            ) : (
+              <>
+                <p className="text-xs text-muted-foreground">Text read from the document (page {activePage}).</p>
+                <pre className="whitespace-pre-wrap text-sm font-mono bg-muted/40 rounded-lg p-3 max-h-[60vh] overflow-auto">
+                  {page?.text || "No text on this page."}
+                </pre>
+              </>
+            )}
           </CardContent>
         </Card>
       </aside>
@@ -323,12 +402,40 @@ function TextField({
   );
 }
 
+/** The uploaded file itself: photos inline (same-origin route), PDFs in a new tab at the cited page. */
+function OriginalView({ original, page, large = false }: { original: NonNullable<Original>; page: number; large?: boolean }) {
+  if (original.kind === "pdf") {
+    return (
+      <a
+        href={`${original.url}#page=${page}`}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex items-center gap-1 text-sm text-primary underline min-h-9"
+      >
+        <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" /> Open the original PDF at page {page}
+      </a>
+    );
+  }
+  return (
+    <a href={original.url} target="_blank" rel="noreferrer" className="block" aria-label="Open the original photo full size in a new tab">
+      {/* eslint-disable-next-line @next/next/no-img-element -- private, auth-checked bytes; must not go through the image optimizer */}
+      <img
+        src={original.url}
+        alt="Original uploaded document"
+        className={`w-full object-contain rounded-lg border bg-white ${large ? "max-h-[70vh]" : "max-h-96"}`}
+      />
+      <span className="text-xs text-muted-foreground">Tap to open full size and zoom.</span>
+    </a>
+  );
+}
+
 function ItemSection({
   title,
   fields,
   items,
   setItems,
   onShowPage,
+  original,
   withStatus = false,
 }: {
   title: string;
@@ -336,8 +443,10 @@ function ItemSection({
   items: Item[];
   setItems: React.Dispatch<React.SetStateAction<Item[]>>;
   onShowPage: (page: number) => void;
+  original: Original;
   withStatus?: boolean;
 }) {
+  const [showOriginal, setShowOriginal] = useState<Record<string, boolean>>({});
   const update = (uid: string, patch: Partial<Item> | ((item: Item) => Partial<Item>)) =>
     setItems((list) => list.map((i) => (i.uid === uid ? { ...i, ...(typeof patch === "function" ? patch(i) : patch) } : i)));
 
@@ -350,18 +459,41 @@ function ItemSection({
       </CardHeader>
       <CardContent className="space-y-4">
         {items.length === 0 && <p className="text-sm text-muted-foreground">None found.</p>}
-        {items.map((item, index) => (
-          <fieldset key={item.uid} className={`rounded-xl border p-3 space-y-3 ${item.flags.length ? "border-health-amber/60 bg-health-amber/5" : "border-border"}`}>
+        {items.map((item, index) => {
+          const attention = attentionFor(item, withStatus);
+          const open = attention.illegible || (attention.needsDecision && !item.checked);
+          const originalShown = showOriginal[item.uid] ?? open;
+          return (
+          <fieldset
+            key={item.uid}
+            className={`rounded-xl border p-3 space-y-3 ${open ? "border-health-amber/60 bg-health-amber/5" : "border-border"}`}
+          >
             <legend className="sr-only">{`${title} ${index + 1}`}</legend>
-            {item.flags.length > 0 && (
+            {(attention.flags.length > 0 || attention.illegible || attention.lookAlikes.length > 0) && (
               <ul className="text-sm text-health-amber space-y-0.5">
-                {item.flags.map((f) => (
+                {attention.flags.map((f) => (
                   <li key={f} className="flex items-center gap-1">
-                    <AlertTriangle className="w-3 h-3" aria-hidden="true" /> {FLAG_TEXT[f]}
+                    <AlertTriangle className="w-3 h-3 shrink-0" aria-hidden="true" /> {FLAG_TEXT[f]}
                   </li>
                 ))}
+                {attention.illegible && (
+                  <li className="flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3 shrink-0" aria-hidden="true" /> Contains [illegible]: type what the document
+                    says, or remove this entry
+                  </li>
+                )}
+                {attention.lookAlikes.length > 0 && (
+                  <li className="flex items-start gap-1">
+                    <AlertTriangle className="w-3 h-3 shrink-0 mt-1" aria-hidden="true" />
+                    <span>
+                      Check carefully: this name is easily confused with <strong>{attention.lookAlikes.join(", ")}</strong>.
+                      Compare it letter by letter with the original.
+                    </span>
+                  </li>
+                )}
               </ul>
             )}
+            {attention.needsDecision && original && originalShown && <OriginalView original={original} page={item.page} />}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {fields.map((f) => (
                 <TextField
@@ -390,8 +522,58 @@ function ItemSection({
                 </div>
               )}
             </div>
+            {attention.needsDecision && (
+              <div className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed p-2">
+                {!open ? (
+                  <>
+                    <span className="text-sm text-health-emerald flex items-center gap-1">
+                      <CheckCircle2 className="w-4 h-4" aria-hidden="true" /> You checked this against the original
+                    </span>
+                    <Button type="button" size="sm" variant="ghost" className="h-9 text-sm gap-1" onClick={() => update(item.uid, { checked: false })}>
+                      <Undo2 className="w-3.5 h-3.5" aria-hidden="true" /> Undo
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-sm font-medium w-full">Your decision is needed:</span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-9 text-sm gap-1"
+                      disabled={attention.illegible}
+                      onClick={() => update(item.uid, { checked: true })}
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /> I checked it, it&apos;s correct
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-9 text-sm gap-1"
+                      onClick={() => setItems((list) => list.filter((i) => i.uid !== item.uid))}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" aria-hidden="true" /> I can&apos;t read it, don&apos;t save
+                    </Button>
+                    {original && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-9 text-sm"
+                        onClick={() => setShowOriginal((s) => ({ ...s, [item.uid]: !originalShown }))}
+                      >
+                        {originalShown ? "Hide original" : "Show original"}
+                      </Button>
+                    )}
+                    <span className="text-xs text-muted-foreground w-full">
+                      If something was misread, correct the fields above first. The original stays in your documents either way.
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
             <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-              <button type="button" className="text-primary underline" onClick={() => onShowPage(item.page)}>
+              <button type="button" className="text-primary underline text-left" onClick={() => onShowPage(item.page)}>
                 Source: page {item.page} — “{item.quote.length > 60 ? `${item.quote.slice(0, 60)}…` : item.quote}”
               </button>
               <Button type="button" size="sm" variant="ghost" className="h-9 text-sm text-destructive gap-1" onClick={() => setItems((list) => list.filter((i) => i.uid !== item.uid))}>
@@ -399,7 +581,8 @@ function ItemSection({
               </Button>
             </div>
           </fieldset>
-        ))}
+          );
+        })}
       </CardContent>
     </Card>
   );

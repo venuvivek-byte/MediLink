@@ -16,7 +16,8 @@ Strict rules:
 5. Do not interpret results: no diagnoses from lab values, no "normal/abnormal" judgements, no drug-interaction comments. Copy a lab result's high/low marker only if it is printed on the report; never work it out from the value and range.
 6. Do not decide whether a medicine is currently being taken.
 7. Dates must be YYYY-MM-DD only when the full date is written; otherwise null.
-8. Respond only with JSON matching the provided schema.`;
+8. The marker [illegible] means the text could not be read. Copy it as-is into the field where it appears (for example a medicine name of "[illegible]") and set "uncertain": true. Never replace it with a plausible medicine name, dose or value, and never pick a similar-looking medicine.
+9. Respond only with JSON matching the provided schema.`;
 
 /** Neutralises anything in the page text that could close or forge our delimiters. */
 function fence(text: string): string {

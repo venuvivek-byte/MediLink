@@ -2,17 +2,27 @@
 // before anything is written. Empty strings mean "unknown" and become null.
 import { z } from "zod";
 import { normalizeMedicationName, normalizeTestName } from "@/lib/domain/normalize";
+import { ILLEGIBLE_MARKER } from "@/lib/ai/verify";
+
+/** Message for a submission that still contains "[illegible]" in a record field. */
+export const ILLEGIBLE_ERROR = "illegible_marker";
+
+// A record must never be saved with "[illegible]" in it: the patient either
+// types what it says or removes the entry. (Source excerpts are exempt: they
+// are verbatim quotes of the transcription.)
+const readable = (v: string) => !ILLEGIBLE_MARKER.test(v);
 
 const optionalText = (max: number) =>
   z
     .string()
     .trim()
     .max(max)
+    .refine(readable, ILLEGIBLE_ERROR)
     .nullable()
     .optional()
     .transform((v) => (v ? v : null));
 
-const requiredText = (max: number) => z.string().trim().min(1).max(max);
+const requiredText = (max: number) => z.string().trim().min(1).max(max).refine(readable, ILLEGIBLE_ERROR);
 
 const isoDate = z
   .string()
@@ -24,7 +34,13 @@ const isoDate = z
 
 const source = {
   source_page: z.number().int().min(1).max(50).nullable().optional().transform((v) => v ?? null),
-  source_excerpt: optionalText(1000),
+  source_excerpt: z
+    .string()
+    .trim()
+    .max(1000)
+    .nullable()
+    .optional()
+    .transform((v) => (v ? v : null)),
 };
 
 export const reviewSubmissionSchema = z

@@ -9,7 +9,8 @@ export type ReviewFlag =
   | "quote_not_found" // the evidence quote is not in the cited page
   | "value_not_found" // the key value (name/result) is not in the cited page
   | "page_not_found" // the cited page does not exist
-  | "model_uncertain"; // the model itself marked the item uncertain
+  | "model_uncertain" // the model itself marked the item uncertain
+  | "illegible_text"; // a field still contains the OCR marker "[illegible]"
 
 export interface Verified<T> {
   item: T;
@@ -58,6 +59,14 @@ export function containsToken(text: string, token: string): boolean {
   return new RegExp(`(^|[\\s()[\\]|,;:])${escaped}($|[\\s()[\\]|,;:])`).test(normalizeForMatch(text));
 }
 
+/** The marker the transcription step writes for words it could not read. */
+export const ILLEGIBLE_MARKER = /\[\s*illegible\s*\]/i;
+
+/** True if any field of the item (other than its evidence) contains the illegible marker. */
+export function hasIllegibleMarker(item: object): boolean {
+  return Object.entries(item).some(([key, value]) => key !== "evidence" && typeof value === "string" && ILLEGIBLE_MARKER.test(value));
+}
+
 function verifyItem<T extends { evidence: { page: number; quote: string }; uncertain?: boolean }>(
   item: T,
   keyValues: (string | null | undefined)[],
@@ -77,6 +86,7 @@ function verifyItem<T extends { evidence: { page: number; quote: string }; uncer
     if (missingValue) flags.push("value_not_found");
   }
   if (item.uncertain) flags.push("model_uncertain");
+  if (hasIllegibleMarker(item)) flags.push("illegible_text");
   return { item, flags, uncertain: flags.length > 0 };
 }
 

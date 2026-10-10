@@ -62,3 +62,6 @@ __pycache__/
 
 # Playwright MCP screenshots/snapshots (may contain real patient data)
 .playwright-mcp/
+
+# Real prescription images used for manual handwriting tests (third-party, may contain patient data)
+/docs/real_presciptions/

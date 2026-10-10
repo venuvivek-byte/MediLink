@@ -10,18 +10,18 @@ export function QuickActions() {
     >
       <h3 className="text-sm font-semibold text-slate-900 mb-2">Quick actions</h3>
 
-      {/* Action 1: Upload Record (Primary Highlight) */}
+      {/* Action 1: Upload Record */}
       <Link
         href="/documents"
-        className="block w-full text-left p-3.5 rounded-xl bg-vault-800 hover:bg-vault-900 text-white transition-all shadow-sm group"
+        className="block w-full text-left p-3.5 rounded-xl border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/40 text-slate-800 transition-all group"
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-            <Upload className="w-4 h-4 text-white" aria-hidden="true" />
+          <div className="w-8 h-8 rounded-lg bg-emerald-50 text-vault-800 flex items-center justify-center shrink-0">
+            <Upload className="w-4 h-4" aria-hidden="true" />
           </div>
           <div>
-            <div className="font-semibold text-sm leading-tight">Upload record</div>
-            <div className="text-[11px] text-emerald-200 mt-0.5">Prescription, lab PDF, or scan</div>
+            <div className="font-semibold text-sm leading-tight text-slate-900">Upload record</div>
+            <div className="text-[11px] text-slate-500 mt-0.5">Prescription, lab PDF, or scan</div>
           </div>
         </div>
       </Link>

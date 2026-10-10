@@ -99,35 +99,37 @@ export function LandingContent({ mode, notice }: LandingContentProps) {
 
 
       {/* ─── SECTION 3: HOW IT WORKS ──────────────────────────────────────── */}
-      <section className="py-20 px-6 sm:px-12 max-w-7xl mx-auto">
-        <div className="text-center max-w-xl mx-auto mb-16 space-y-2">
-          <span className="text-xs font-semibold text-vault-800 uppercase tracking-wider">Simple Workflow</span>
-          <h2 className="text-3xl sm:text-4xl font-serif font-medium text-slate-900">How MediLink Works</h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-white rounded-2xl p-8 border border-slate-200/80 shadow-xs">
-            <span className="text-4xl font-bold font-serif text-slate-200">01</span>
-            <h3 className="text-lg font-semibold text-slate-900 mt-3">Upload your records</h3>
-            <p className="text-sm text-slate-600 mt-2 leading-relaxed">
-              Drag and drop any prescription PDF, lab report, or scan. We securely store files in your private encrypted vault.
-            </p>
+      <section className="py-20 bg-white border-y border-slate-200/80 px-6 sm:px-12">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center max-w-xl mx-auto mb-16 space-y-2">
+            <span className="text-xs font-semibold text-vault-800 uppercase tracking-wider">Simple Workflow</span>
+            <h2 className="text-3xl sm:text-4xl font-serif font-medium text-slate-900">How MediLink Works</h2>
           </div>
 
-          <div className="bg-white rounded-2xl p-8 border border-slate-200/80 shadow-xs">
-            <span className="text-4xl font-bold font-serif text-slate-200">02</span>
-            <h3 className="text-lg font-semibold text-slate-900 mt-3">Confirm extractions</h3>
-            <p className="text-sm text-slate-600 mt-2 leading-relaxed">
-              Review medications and lab values side-by-side with original scans. Nothing enters your permanent timeline without your review.
-            </p>
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-slate-50 rounded-2xl p-8 border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all">
+              <span className="text-4xl font-bold font-serif text-slate-300">01</span>
+              <h3 className="text-lg font-semibold text-slate-900 mt-3">Upload your records</h3>
+              <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+                Drag and drop any prescription PDF, lab report, or scan. We securely store files in your private encrypted vault.
+              </p>
+            </div>
 
-          <div className="bg-white rounded-2xl p-8 border border-slate-200/80 shadow-xs">
-            <span className="text-4xl font-bold font-serif text-slate-200">03</span>
-            <h3 className="text-lg font-semibold text-slate-900 mt-3">Share on your terms</h3>
-            <p className="text-sm text-slate-600 mt-2 leading-relaxed">
-              Generate PIN-protected links for doctors, carry your emergency QR card, and track who views your records in the audit log.
-            </p>
+            <div className="bg-slate-50 rounded-2xl p-8 border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all">
+              <span className="text-4xl font-bold font-serif text-slate-300">02</span>
+              <h3 className="text-lg font-semibold text-slate-900 mt-3">Confirm extractions</h3>
+              <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+                Review medications and lab values side-by-side with original scans. Nothing enters your permanent timeline without your review.
+              </p>
+            </div>
+
+            <div className="bg-slate-50 rounded-2xl p-8 border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all">
+              <span className="text-4xl font-bold font-serif text-slate-300">03</span>
+              <h3 className="text-lg font-semibold text-slate-900 mt-3">Share on your terms</h3>
+              <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+                Generate PIN-protected links for doctors, carry your emergency QR card, and track who views your records in the audit log.
+              </p>
+            </div>
           </div>
         </div>
       </section>

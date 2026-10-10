@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Clock, LayoutDashboard, LogOut, Menu, Pill, Plus } from "lucide-react";
+import { Clock, LayoutDashboard, LogOut, Menu, Pill, Plus, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { NAVIGATION, isActivePath } from "./nav";
@@ -75,6 +75,16 @@ export default function MobileNav() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link
+                  href="/settings"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2 p-3 rounded-xl border border-border text-sm hover:bg-accent"
+                >
+                  <Settings className="w-4 h-4 text-primary" aria-hidden="true" />
+                  Settings
+                </Link>
+              </li>
               <li>
                 <button
                   type="button"

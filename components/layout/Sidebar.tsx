@@ -31,8 +31,15 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
     >
       <div className={cn("p-6", collapsed && "p-4")}>
         {/* App Brand Logo */}
-        <div className={cn("flex items-center gap-3 mb-8", collapsed && "justify-center mb-6")}>
-          <div className="w-10 h-10 rounded-xl bg-vault-800 flex items-center justify-center text-white shadow-md shadow-emerald-900/10 shrink-0">
+        <Link
+          href="/"
+          aria-label="MediLink Homepage"
+          className={cn(
+            "flex items-center gap-3 mb-8 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-vault-600 transition-opacity hover:opacity-90 group",
+            collapsed && "justify-center mb-6"
+          )}
+        >
+          <div className="w-10 h-10 rounded-xl bg-vault-800 flex items-center justify-center text-white shadow-md shadow-emerald-900/10 shrink-0 group-hover:scale-105 transition-transform">
             <svg
               className="w-5 h-5"
               fill="none"
@@ -50,7 +57,7 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
           </div>
           {!collapsed && (
             <div>
-              <span className="text-lg font-bold tracking-tight text-slate-900 leading-tight block">
+              <span className="text-lg font-bold tracking-tight text-slate-900 leading-tight block group-hover:text-vault-800 transition-colors">
                 MediLink
               </span>
               <span className="text-xs font-medium text-slate-400">
@@ -58,7 +65,7 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
               </span>
             </div>
           )}
-        </div>
+        </Link>
 
         {/* Navigation Links */}
         <nav aria-label="Main" className="space-y-1.5">

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { ArrowDown, ArrowRight, Heart, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { AppMode } from "@/lib/config/schema";
@@ -63,16 +64,20 @@ export function LandingHero({ mode }: LandingHeroProps) {
 
       {/* Top Header */}
       <header className="relative z-20 flex items-center justify-between px-6 sm:px-12 lg:px-16 py-6 sm:py-8">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-vault-800 flex items-center justify-center text-white shadow-md shadow-emerald-950/20">
+        <Link
+          href="/"
+          aria-label="MediLink Homepage"
+          className="flex items-center gap-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-vault-600 group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-vault-800 flex items-center justify-center text-white shadow-md shadow-emerald-950/20 group-hover:scale-105 transition-transform">
             <Heart className="w-5 h-5" aria-hidden="true" />
           </div>
           <div>
-            <span className="text-xl font-bold tracking-tight text-[#063326] leading-tight block">
+            <span className="text-xl font-bold tracking-tight text-[#063326] leading-tight block group-hover:opacity-85 transition-opacity">
               MediLink
             </span>
           </div>
-        </div>
+        </Link>
       </header>
 
       {/* Main Hero Content Area (Left-Aligned, exactly matching the original design) */}

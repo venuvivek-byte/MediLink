@@ -253,13 +253,13 @@ export function LandingContent({ mode, notice }: LandingContentProps) {
       {/* ─── FOOTER ──────────────────────────────────────────────────────── */}
       <footer className="border-t border-slate-200 bg-white py-12 px-6 sm:px-12 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-vault-800 text-white flex items-center justify-center font-bold text-xs">
+          <Link href="/" className="flex items-center gap-2 group hover:opacity-85 transition-opacity">
+            <div className="w-6 h-6 rounded-lg bg-vault-800 text-white flex items-center justify-center font-bold text-xs group-hover:scale-105 transition-transform">
               M
             </div>
             <span className="font-bold text-slate-800 text-sm">MediLink</span>
             <span>— Personal Health Records Vault</span>
-          </div>
+          </Link>
 
           <div className="flex items-center gap-6">
             <a href="#about-section" className="hover:text-slate-800 transition-colors">About</a>

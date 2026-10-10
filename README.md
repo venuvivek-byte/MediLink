@@ -23,6 +23,8 @@ Turn fragmented prescriptions, lab reports, and clinical documents into a unifie
 
 ---
 
+**Live Demo Link** [https://drive.google.com/drive/folders/1QmHGvWwWQsaxcc7WIwwy6EXzlDG0mFJ-?usp=sharing]
+
 ## What MediLink Does
 
 Healthcare records today are deeply fragmented. Every visit to a new clinic, diagnostic laboratory, or specialist forces patients to start their medical story from scratch. Paper prescriptions are stored in folders, lab PDFs are lost in email threads, and critical medical histories are forgotten during emergencies.

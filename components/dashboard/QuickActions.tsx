@@ -1,63 +1,72 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Upload, Share2, ShieldAlert, Clock, Sparkles } from "lucide-react";
+import { Upload, Share2, ShieldAlert, Clock } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export function QuickActions() {
   const actions = [
     {
-      title: "Upload Record",
+      title: "Upload record",
       desc: "Prescription, lab PDF, or scan",
       href: "/documents",
       icon: Upload,
-      color: "bg-primary/10 text-primary hover:bg-primary/20",
+      primary: true,
+      color: "bg-primary-foreground/15 text-primary-foreground",
     },
     {
-      title: "Share with Clinician",
+      title: "Share with a clinician",
       desc: "PIN-protected, expiring link",
       href: "/share",
       icon: Share2,
-      color: "bg-health-emerald/10 text-health-emerald hover:bg-health-emerald/20",
+      primary: false,
+      color: "bg-health-emerald/10 text-health-emerald",
     },
     {
-      title: "Emergency Card",
-      desc: "Instant QR access to vital info",
+      title: "Emergency card",
+      desc: "QR access to vital info",
       href: "/emergency",
       icon: ShieldAlert,
-      color: "bg-health-rose/10 text-health-rose hover:bg-health-rose/20",
+      primary: false,
+      color: "bg-health-rose/10 text-health-rose",
     },
     {
-      title: "Full Timeline",
-      desc: "Filter events by date & provider",
+      title: "Full timeline",
+      desc: "Filter by date and provider",
       href: "/timeline",
       icon: Clock,
-      color: "bg-health-indigo/10 text-health-indigo hover:bg-health-indigo/20",
+      primary: false,
+      color: "bg-health-indigo/10 text-health-indigo",
     },
   ];
 
   return (
-    <Card className="bg-card/60 backdrop-blur-sm">
+    <Card className="border-border/80">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-primary" />
-          Quick Actions
-        </CardTitle>
+        <CardTitle className="text-lg font-semibold">Quick actions</CardTitle>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+      {/* One column inside the narrow lg sidebar slot; two columns only on
+          mid-width screens where the card spans the full content width. */}
+      <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5">
         {actions.map((act) => (
-          <Link key={act.title} href={act.href}>
-            <Button
-              variant="outline"
-              className="w-full h-auto p-3.5 flex items-center justify-start gap-3 border-border/80 hover:bg-accent/40 rounded-xl transition-all"
-            >
-              <div className={`p-2.5 rounded-xl ${act.color}`}>
-                <act.icon className="w-4 h-4" />
+          <Link
+            key={act.title}
+            href={act.href}
+            className={cn(
+              "flex items-center gap-3 min-h-14 p-3 rounded-xl border transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+              act.primary
+                ? "bg-primary text-primary-foreground border-transparent hover:bg-primary/90"
+                : "bg-background border-border/80 hover:bg-muted"
+            )}
+          >
+            <div className={cn("p-2.5 rounded-xl shrink-0", act.color)}>
+              <act.icon className="w-4 h-4" aria-hidden="true" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-semibold">{act.title}</div>
+              <div className={cn("text-xs", act.primary ? "text-primary-foreground/85" : "text-muted-foreground")}>
+                {act.desc}
               </div>
-              <div className="text-left">
-                <div className="text-xs font-semibold">{act.title}</div>
-                <div className="text-[11px] text-muted-foreground">{act.desc}</div>
-              </div>
-            </Button>
+            </div>
           </Link>
         ))}
       </CardContent>

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { LogOut, Settings, Upload } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -38,16 +39,14 @@ export default function Header({ title, subtitle }: HeaderProps) {
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between gap-4 px-4 md:px-8 h-16 border-b border-border bg-background/90 backdrop-blur">
       <div className="min-w-0">
-        <h1 className="text-lg font-bold tracking-tight truncate">{title}</h1>
-        {subtitle && <p className="text-xs text-muted-foreground truncate">{subtitle}</p>}
+        <h1 className="text-xl md:text-2xl font-bold tracking-tight truncate">{title}</h1>
+        {subtitle && <p className="text-xs md:text-sm text-muted-foreground truncate">{subtitle}</p>}
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
-        <Link href="/documents" className="hidden sm:block">
-          <Button size="sm" className="gap-2">
-            <Upload className="w-4 h-4" aria-hidden="true" />
-            Upload document
-          </Button>
+        <Link href="/documents" className={cn(buttonVariants({ size: "lg" }), "hidden sm:inline-flex gap-2 px-3.5")}>
+          <Upload className="w-4 h-4" aria-hidden="true" />
+          Upload document
         </Link>
 
         <DropdownMenu>

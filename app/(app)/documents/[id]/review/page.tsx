@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import Header from "@/components/layout/Header";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ReviewScreen } from "@/components/documents/ReviewScreen";
 import { requireSession } from "@/lib/auth/session";
@@ -51,8 +51,8 @@ async function ReviewContent({ params }: { params: Promise<{ id: string }> }) {
           <Card>
             <CardContent className="p-8 text-center space-y-3">
               <p className="text-sm text-muted-foreground">There is nothing to review for this document right now.</p>
-              <Link href="/documents">
-                <Button variant="outline" size="sm">Back to documents</Button>
+              <Link href="/documents" className={buttonVariants({ variant: "outline", size: "sm" })}>
+                Back to documents
               </Link>
             </CardContent>
           </Card>

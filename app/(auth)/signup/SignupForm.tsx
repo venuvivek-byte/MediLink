@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
@@ -53,8 +53,8 @@ export function SignupForm() {
         <p className="text-muted-foreground">
           If email confirmation is enabled, confirm your address before signing in.
         </p>
-        <Link href="/login">
-          <Button size="sm" className="w-full text-xs mt-2">Go to sign in</Button>
+        <Link href="/login" className={buttonVariants({ size: "sm", className: "w-full text-xs mt-2" })}>
+          Go to sign in
         </Link>
       </div>
     );

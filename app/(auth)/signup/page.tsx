@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { getPublicConfig } from "@/lib/config/env";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { AuthCard } from "../AuthCard";
 import { SignupForm } from "./SignupForm";
 
@@ -27,8 +27,8 @@ async function SignupContent() {
         <p className="text-xs text-muted-foreground">
           Accounts cannot be created while the app runs in demo mode. Use the demo patient instead.
         </p>
-        <Link href="/login">
-          <Button className="w-full h-9 text-sm">Back to demo sign-in</Button>
+        <Link href="/login" className={buttonVariants({ className: "w-full h-9 text-sm" })}>
+          Back to demo sign-in
         </Link>
       </AuthCard>
     );

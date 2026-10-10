@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertCircle, CheckCircle2, Eye, FileText, FlaskConical, Loader2, RefreshCw, Trash2, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { VerificationBadge } from "@/components/ui/VerificationBadge";
 import { ReviewForm } from "./ReviewForm";
@@ -172,10 +172,8 @@ function LiveDocuments({ documents, maxUploadBytes }: DocumentsViewProps) {
                     {doc.processingError && !doc.cancelled && <p className="text-xs text-destructive">{doc.processingError}</p>}
                     <div className="flex flex-wrap gap-2">
                       {awaitingReview && (
-                        <Link href={`/documents/${doc.id}/review`}>
-                          <Button size="sm" className="h-8 text-xs gap-1">
-                            <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /> Review extracted details
-                          </Button>
+                        <Link href={`/documents/${doc.id}/review`} className={buttonVariants({ size: "sm", className: "h-8 text-xs gap-1" })}>
+                          <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /> Review extracted details
                         </Link>
                       )}
                       {canProcess && (

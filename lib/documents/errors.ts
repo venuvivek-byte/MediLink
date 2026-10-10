@@ -13,12 +13,14 @@ export const DOCUMENT_ERROR_MESSAGES = {
   no_text_found: "No readable text was found in the document.",
   ocr_unavailable: "This looks like a scanned document, and text recognition (OCR) is not available right now.",
   ocr_failed: "Text recognition failed. Try a clearer scan or photo.",
+  ocr_timeout: "Text recognition took too long. Try again, or upload fewer scanned pages at a time.",
   ai_not_configured: "Automatic extraction is not configured. You can still keep the document.",
   ai_unavailable: "The extraction service is temporarily unavailable. Please try again later.",
   ai_invalid_output: "The extraction result could not be validated, so it was discarded. Please retry.",
   storage_failed: "The document could not be stored. Please try again.",
   already_processing: "This document is already being processed.",
   too_many_attempts: "Processing has failed too many times for this document.",
+  internal_error: "Something went wrong on our side while processing this document. Please retry.",
 } as const;
 
 export type DocumentErrorCode = keyof typeof DOCUMENT_ERROR_MESSAGES;

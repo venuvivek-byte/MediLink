@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { PageSkeleton } from "@/components/layout/PageSkeleton";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
@@ -10,7 +12,17 @@ import { getReviewData } from "@/lib/documents/service";
 
 export const metadata = { title: "Review document" };
 
-export default async function ReviewPage({ params }: { params: Promise<{ id: string }> }) {
+// Patient data is request-time: stream it behind Suspense so navigation shows
+// the page immediately (Cache Components). Health data is never server-cached.
+export default function ReviewPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense fallback={<PageSkeleton title="Review extracted details" subtitle="Check everything against your document before it is saved" />}>
+      <ReviewContent params={params} />
+    </Suspense>
+  );
+}
+
+async function ReviewContent({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireSession();
   const { id } = await params;
   if (session.kind !== "live" || !z.string().uuid().safeParse(id).success) notFound();

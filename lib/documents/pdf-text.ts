@@ -4,6 +4,7 @@ export const MAX_PAGES = 20;
 /** Pages with less embedded text than this are treated as scanned images. */
 export const MIN_TEXT_CHARS_PER_PAGE = 20;
 export const MAX_TEXT_CHARS_PER_PAGE = 20_000;
+const PDF_PARSE_ERRORS = new Set(["InvalidPDFException", "FormatError"]);
 
 export interface PageText {
   pageNumber: number;
@@ -59,8 +60,12 @@ export async function extractPdfText(bytes: Uint8Array, maxPages = MAX_PAGES): P
     pdf = await task.promise;
   } catch (error) {
     await task.destroy();
-    if ((error as { name?: string })?.name === "PasswordException") throw new DocumentError("pdf_encrypted");
-    throw new DocumentError("pdf_invalid");
+    const name = (error as { name?: string })?.name;
+    if (name === "PasswordException") throw new DocumentError("pdf_encrypted");
+    // Only genuine parse failures blame the file; anything else (e.g. pdf.js
+    // failing to start its worker) is our fault and must surface as such.
+    if (name && PDF_PARSE_ERRORS.has(name)) throw new DocumentError("pdf_invalid");
+    throw error;
   }
 
   try {

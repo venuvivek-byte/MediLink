@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { NoOcrProvider, PaddleOcrProvider, getOcrProvider } from "@/lib/ocr";
+import { NoOcrProvider, OCR_MAX_TIMEOUT_MS, PaddleOcrProvider, getOcrProvider, ocrTimeoutMs } from "@/lib/ocr";
 import { parseConfig } from "@/lib/config/schema";
 import { TEST_SECRET } from "./helpers/env";
 
@@ -24,6 +24,7 @@ describe("PaddleOcrProvider", () => {
 
   it.each([
     ["service down", async () => Promise.reject(new TypeError("fetch failed")), "ocr_unavailable", true],
+    ["service too slow", async () => Promise.reject(new DOMException("timed out", "TimeoutError")), "ocr_timeout", true],
     ["token rejected", async () => json(401, {}), "ocr_unavailable", false],
     ["file too large", async () => json(413, {}), "file_too_large", false],
     ["unreadable file", async () => json(422, {}), "ocr_failed", false],
@@ -35,6 +36,15 @@ describe("PaddleOcrProvider", () => {
       code,
       retryable,
     });
+  });
+});
+
+describe("ocrTimeoutMs", () => {
+  it("grows with the number of pages but never exceeds the cap that keeps AI inside the route budget", () => {
+    expect(ocrTimeoutMs(1)).toBe(50_000);
+    expect(ocrTimeoutMs(3)).toBe(90_000);
+    expect(ocrTimeoutMs(20)).toBe(OCR_MAX_TIMEOUT_MS);
+    expect(ocrTimeoutMs(0)).toBe(50_000);
   });
 });
 

@@ -840,10 +840,39 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      // TEMPORARY hand-written until migration 006 is applied and types are regenerated.
       claim_document_for_processing: {
         Args: { p_document_id: string }
-        Returns: Database["public"]["Tables"]["documents"]["Row"][]
+        Returns: {
+          cancelled_at: string | null
+          content_sha256: string | null
+          created_at: string
+          document_date: string | null
+          document_type: string | null
+          extracted_data: Json | null
+          extraction_status: string
+          facility_name: string | null
+          id: string
+          metadata: Json | null
+          mime_type: string
+          original_filename: string
+          page_count: number | null
+          patient_id: string
+          processed_at: string | null
+          processing_attempts: number
+          processing_error: string | null
+          processing_started_at: string | null
+          provider_name: string | null
+          size_bytes: number | null
+          storage_path: string
+          updated_at: string
+          verification_status: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "documents"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       confirm_extraction: {
         Args: { p_extraction_id: string; p_review: Json }

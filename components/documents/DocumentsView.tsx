@@ -165,7 +165,8 @@ function LiveDocuments({ documents, maxUploadBytes }: DocumentsViewProps) {
                             {PROCESSING_LABEL[doc.processingStatus]}
                           </Badge>
                         )}
-                        <VerificationBadge status={doc.reviewStatus} />
+                        {/* "Pending review" only when there is something to review. */}
+                        {(awaitingReview || doc.reviewStatus === "patient_reviewed") && <VerificationBadge status={doc.reviewStatus} />}
                       </div>
                     </div>
                     {doc.processingError && !doc.cancelled && <p className="text-xs text-destructive">{doc.processingError}</p>}

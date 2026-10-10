@@ -10,6 +10,8 @@ export default defineConfig({
     ],
   },
   test: {
+    // Tests that parse PDFs cold-load pdf.js, which can exceed the 5s default on a busy machine.
+    testTimeout: 20_000,
     environment: "node",
     include: ["tests/**/*.test.ts"],
     // Tests must never depend on the developer's real .env.local.

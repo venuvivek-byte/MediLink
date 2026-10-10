@@ -56,6 +56,7 @@ vi.mock("@/lib/ai/providers/gemini", () => ({
 
 const ocrCalls: unknown[] = [];
 let ocrAvailable = true;
+let ocrCrash = false;
 vi.mock("@/lib/ocr", async (importOriginal) => {
   const original = await importOriginal<typeof import("@/lib/ocr")>();
   return {
@@ -65,6 +66,7 @@ vi.mock("@/lib/ocr", async (importOriginal) => {
       available: ocrAvailable,
       recognize: async (req: { pages?: number[] }) => {
         ocrCalls.push(req);
+        if (ocrCrash) throw new TypeError("boom near 'Tab Metformin 500 mg'");
         if (!ocrAvailable) {
           const { DocumentError } = await import("@/lib/documents/errors");
           throw new DocumentError("ocr_unavailable");
@@ -91,6 +93,7 @@ beforeEach(() => {
   ocrCalls.length = 0;
   aiBehaviour = "ok";
   ocrAvailable = true;
+  ocrCrash = false;
 });
 
 describe("uploadDocument", () => {
@@ -166,6 +169,13 @@ describe("processDocument", () => {
     expect((await processDocument(session, doc.id)).ok).toBe(true);
     expect(ocrCalls).toEqual([expect.objectContaining({ pages: [2] })]);
     expect(aiCalls[0].pages.map((p) => p.pageNumber)).toEqual([1, 2]);
+    // Each stored page says where its text came from; only OCR pages carry a confidence.
+    const stored = fake.db.tables.document_pages.map((p) => [p.page_number, p.text_source, p.ocr_confidence]);
+    expect(stored).toEqual([
+      [1, "pdf_text", null],
+      [2, "ocr", 0.9],
+    ]);
+    expect(fake.db.tables.document_extractions[0]).toMatchObject({ text_source: "mixed", ocr_provider: "paddleocr" });
   });
 
   it("image: goes straight to OCR", async () => {
@@ -173,6 +183,8 @@ describe("processDocument", () => {
     const { processDocument } = await service();
     expect((await processDocument(session, doc.id)).ok).toBe(true);
     expect(ocrCalls).toHaveLength(1);
+    expect(fake.db.tables.document_pages[0]).toMatchObject({ text_source: "ocr", ocr_confidence: 0.9 });
+    expect(fake.db.tables.document_extractions[0]).toMatchObject({ text_source: "ocr" });
   });
 
   it("never drops pages silently: OCR unavailable fails the whole document with a clear reason", async () => {
@@ -185,12 +197,27 @@ describe("processDocument", () => {
     expect(fake.db.tables.audit_logs.map((a) => a.event_type)).toContain("extraction_failed");
   });
 
+  it("an unexpected internal failure is reported as ours (not 'damaged file' or 'AI down') and logs no content", async () => {
+    ocrCrash = true;
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    const doc = await uploaded(PNG, "image/png");
+    const { processDocument } = await service();
+    expect(await processDocument(session, doc.id)).toEqual({ ok: false, code: "internal_error", retryable: true });
+    expect(fake.db.tables.documents[0]).toMatchObject({ extraction_status: "failed", processing_error: "internal_error" });
+    expect(JSON.stringify(errors.mock.calls)).not.toContain("Metformin");
+    expect(JSON.stringify(errors.mock.calls)).toContain("TypeError");
+    errors.mockRestore();
+  });
+
   it("AI not configured: fails clearly and NEVER substitutes simulated output", async () => {
     useEnv({ ...LIVE_ENV, AI_PROVIDER: "none" });
     const doc = await uploaded(new Uint8Array(makePdf(["Apollo Clinic\nRx: Tab Metformin 500 mg BD"])), "application/pdf");
     const { processDocument } = await service();
     expect(await processDocument(session, doc.id)).toMatchObject({ ok: false, code: "ai_not_configured" });
     expect(fake.db.tables.document_extractions).toHaveLength(0);
+    // Nothing is parsed, stored or sent to OCR when extraction cannot run.
+    expect(fake.db.tables.document_pages ?? []).toHaveLength(0);
+    expect(ocrCalls).toHaveLength(0);
   });
 
   it("provider rejects the key: extraction marked failed, document can be retried later", async () => {

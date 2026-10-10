@@ -5,6 +5,14 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   poweredByHeader: false,
+  // pdf.js loads its worker (pdf.worker.mjs) relative to its own file; bundling
+  // it into .next chunks breaks that lookup, so load it from node_modules.
+  serverExternalPackages: ["pdfjs-dist"],
+  // The worker is loaded with a dynamic import the build tracer cannot see, so
+  // deployments (Vercel) would omit it unless it is listed explicitly.
+  outputFileTracingIncludes: {
+    "/api/documents/*/process": ["./node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs"],
+  },
   turbopack: {
     rules: {
       "*.css": {

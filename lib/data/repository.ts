@@ -8,6 +8,7 @@ import type {
   PatientProfile,
   ShareLinkSummary,
   TimelineEvent,
+  DuplicateDecision,
 } from "./types";
 
 /**
@@ -26,6 +27,7 @@ export interface PatientRepository {
   listAllergies(): Promise<Allergy[]>;
   listShareLinks(): Promise<ShareLinkSummary[]>;
   listAuditEvents(): Promise<AuditEvent[]>;
+  listDuplicateDecisions(): Promise<DuplicateDecision[]>;
 }
 
 /** Thrown with a generic message; the cause is logged server-side without record contents. */

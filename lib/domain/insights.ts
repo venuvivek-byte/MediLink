@@ -1,7 +1,22 @@
 // Transparent, rule-based observations over a patient's records. These are
 // prompts for the patient to check with a clinician, never clinical findings.
 import { differenceInCalendarDays, parseISO } from "date-fns";
-import type { LabResult, Medication } from "@/lib/data/types";
+import type { DuplicateDecision, LabResult, Medication } from "@/lib/data/types";
+
+/** Stable key for a set of record ids (order-independent). */
+export function recordSetKey(ids: string[]): string {
+  return [...ids].sort().join(",");
+}
+
+/**
+ * True if the patient already said this EXACT set of records is not a
+ * duplicate. A new record joining the group produces a new set, so the alert
+ * comes back for the patient to look at again.
+ */
+function isDismissed(kind: DuplicateDecision["kind"], ids: string[], decisions: DuplicateDecision[]): boolean {
+  const key = recordSetKey(ids);
+  return decisions.some((d) => d.kind === kind && recordSetKey(d.recordIds) === key);
+}
 
 export interface DuplicateMedicationAlert {
   key: string;
@@ -15,7 +30,10 @@ export interface DuplicateMedicationAlert {
  * is current or of uncertain status. Historical/discontinued entries are not
  * compared, because an old prescription is not evidence of a current one.
  */
-export function findDuplicateMedications(medications: Medication[]): DuplicateMedicationAlert[] {
+export function findDuplicateMedications(
+  medications: Medication[],
+  decisions: DuplicateDecision[] = []
+): DuplicateMedicationAlert[] {
   const groups = new Map<string, Medication[]>();
   for (const med of medications) {
     if (med.status !== "current" && med.status !== "uncertain") continue;
@@ -27,6 +45,7 @@ export function findDuplicateMedications(medications: Medication[]): DuplicateMe
 
   return [...groups.entries()]
     .filter(([, records]) => records.length > 1)
+    .filter(([, records]) => !isDismissed("medication", records.map((r) => r.id), decisions))
     .map(([key, records]) => {
       const doses = new Set(records.map((r) => `${r.strength ?? "?"}|${r.frequency ?? "?"}`));
       const reason =
@@ -67,12 +86,37 @@ export function findRepeatTests(labs: LabResult[]): RepeatTestAlert[] {
     const sorted = [...results].sort((a, b) => (a.testDate! < b.testDate! ? -1 : 1));
     for (let i = 1; i < sorted.length; i++) {
       const daysApart = differenceInCalendarDays(parseISO(sorted[i].testDate!), parseISO(sorted[i - 1].testDate!));
-      if (daysApart < REPEAT_TEST_WINDOW_DAYS) {
+      // Same-day entries are handled by findDuplicateLabEntries.
+      if (daysApart > 0 && daysApart < REPEAT_TEST_WINDOW_DAYS) {
         alerts.push({ key, testName: sorted[i].testName, daysApart, earlier: sorted[i - 1], later: sorted[i] });
       }
     }
   }
   return alerts;
+}
+
+export interface DuplicateLabAlert {
+  key: string;
+  testName: string;
+  testDate: string;
+  records: LabResult[];
+}
+
+/**
+ * Flags the same result entered more than once: same test, date, value and
+ * unit (typically the same report imported twice). The patient decides.
+ */
+export function findDuplicateLabEntries(labs: LabResult[], decisions: DuplicateDecision[] = []): DuplicateLabAlert[] {
+  const groups = new Map<string, LabResult[]>();
+  for (const lab of labs) {
+    if (!lab.testDate || !lab.value) continue;
+    const key = [lab.normalizedTestName, lab.testDate, lab.value.trim().toLowerCase(), (lab.unit ?? "").trim().toLowerCase()].join("|");
+    groups.set(key, [...(groups.get(key) ?? []), lab]);
+  }
+  return [...groups.entries()]
+    .filter(([, records]) => records.length > 1)
+    .filter(([, records]) => !isDismissed("lab_result", records.map((r) => r.id), decisions))
+    .map(([key, records]) => ({ key, testName: records[0].testName, testDate: records[0].testDate!, records }));
 }
 
 export interface LabSeries {

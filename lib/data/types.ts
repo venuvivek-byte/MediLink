@@ -56,6 +56,7 @@ export interface TimelineEvent {
   facilityName: string | null;
   reviewStatus: ReviewStatus;
   sourceDocumentId: string | null;
+  sourcePage: number | null;
 }
 
 export interface Medication {
@@ -74,6 +75,8 @@ export interface Medication {
   prescriberName: string | null;
   facilityName: string | null;
   sourceDocumentId: string | null;
+  /** Page of the source document the entry was confirmed from. */
+  sourcePage: number | null;
 }
 
 export interface LabResult {
@@ -84,9 +87,12 @@ export interface LabResult {
   unit: string | null;
   /** Exactly as printed on the source report, if present. */
   referenceRange: string | null;
+  /** High/low marker exactly as printed on the report (e.g. "H"); null if none. Never computed. */
+  reportFlag: string | null;
   testDate: string | null;
   reviewStatus: ReviewStatus;
   sourceDocumentId: string | null;
+  sourcePage: number | null;
 }
 
 export interface Condition {
@@ -95,6 +101,7 @@ export interface Condition {
   status: "active" | "resolved" | "unknown";
   reviewStatus: ReviewStatus;
   sourceDocumentId: string | null;
+  sourcePage: number | null;
 }
 
 export interface Allergy {
@@ -103,6 +110,16 @@ export interface Allergy {
   reaction: string | null;
   reviewStatus: ReviewStatus;
   sourceDocumentId: string | null;
+  sourcePage: number | null;
+}
+
+export type RecordKind = "medication" | "lab_result" | "condition" | "allergy" | "medical_event";
+
+/** The patient decided these records are NOT duplicates; that exact set is not flagged again. */
+export interface DuplicateDecision {
+  kind: "medication" | "lab_result";
+  /** Sorted record ids. */
+  recordIds: string[];
 }
 
 export type ShareCategory = "medications" | "conditions" | "lab_results" | "allergies" | "documents" | "timeline";

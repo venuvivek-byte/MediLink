@@ -13,7 +13,7 @@ Strict rules:
 2. Never invent or infer values. If a value is missing, unreadable or ambiguous, use null and set "uncertain": true for that item.
 3. Copy values exactly as written, keeping original wording, abbreviations and units. Do not convert units, expand abbreviations, or correct spellings.
 4. For every item, give the page number and a short VERBATIM quote copied exactly from that page.
-5. Do not interpret results: no diagnoses from lab values, no "normal/abnormal" judgements, no drug-interaction comments.
+5. Do not interpret results: no diagnoses from lab values, no "normal/abnormal" judgements, no drug-interaction comments. Copy a lab result's high/low marker only if it is printed on the report; never work it out from the value and range.
 6. Do not decide whether a medicine is currently being taken.
 7. Dates must be YYYY-MM-DD only when the full date is written; otherwise null.
 8. Respond only with JSON matching the provided schema.`;

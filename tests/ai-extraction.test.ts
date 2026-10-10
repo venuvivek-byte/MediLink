@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { extractionJsonSchema, extractionSchema, type Extraction } from "@/lib/ai/extraction-schema";
 import { buildUserPrompt, SYSTEM_INSTRUCTION } from "@/lib/ai/prompt";
-import { isAmbiguousDate, verifyExtraction } from "@/lib/ai/verify";
+import { containsToken, isAmbiguousDate, verifyExtraction } from "@/lib/ai/verify";
 import { runExtraction } from "@/lib/ai";
 import { ProviderError, type ExtractionProvider } from "@/lib/ai/providers/types";
 import { SimulatedExtractionProvider } from "@/lib/ai/providers/simulated";
@@ -39,6 +39,7 @@ function extraction(overrides: Partial<Extraction> = {}): Extraction {
         value: "7.2",
         unit: "%",
         reference_range: "< 5.7 %",
+        flag: null,
         result_date: null,
         uncertain: false,
         evidence: { page: 2, quote: "HbA1c 7.2 %" },
@@ -135,6 +136,42 @@ describe("evidence verification (hallucination check)", () => {
   });
 });
 
+describe("lab report flag (copied, never computed)", () => {
+  const LAB_PAGE = [
+    { pageNumber: 1, text: ["Test   Result  Flag  Unit", "HbA1c  7.2     H     %", "TSH    2.4           uIU/mL"].join("\n") },
+  ];
+  const lab = (flag: string | null, quote: string) =>
+    extraction({
+      medications: [],
+      lab_results: [
+        { test_name: quote.split(/\s+/)[0], value: quote.split(/\s+/)[1], unit: null, reference_range: null, flag, result_date: null, uncertain: false, evidence: { page: 1, quote } },
+      ],
+    });
+
+  it("accepts a flag that is printed on the result's own line", () => {
+    expect(verifyExtraction(lab("H", "HbA1c  7.2     H"), LAB_PAGE).lab_results[0].flags).toEqual([]);
+  });
+
+  it("flags a marker the report does not print, even though 'H' occurs inside 'HbA1c'", () => {
+    // TSH has no flag; an invented "H" must not pass just because the letter
+    // appears elsewhere on the page or inside the test name.
+    expect(verifyExtraction(lab("H", "TSH    2.4"), LAB_PAGE).lab_results[0].flags).toContain("value_not_found");
+    expect(verifyExtraction(lab("H", "HbA1c  7.2"), LAB_PAGE).lab_results[0].flags).toContain("value_not_found");
+  });
+
+  it("matches whole tokens only", () => {
+    expect(containsToken("HbA1c 7.2 H %", "H")).toBe(true);
+    expect(containsToken("HbA1c 7.2 %", "H")).toBe(false);
+    expect(containsToken("LDL 132 (H)", "H")).toBe(true);
+    expect(containsToken("value 5 *", "*")).toBe(true);
+    expect(containsToken("value 5", "*")).toBe(false);
+  });
+
+  it("the prompt forbids computing a flag from the value and range", () => {
+    expect(SYSTEM_INSTRUCTION).toMatch(/never work it out from the value and range/);
+  });
+});
+
 describe("ambiguous dates", () => {
   it("flags 09/10/2025 resolved to either reading", () => {
     expect(isAmbiguousDate("2025-10-09", "Date: 09/10/2025")).toBe(true);
@@ -164,7 +201,7 @@ describe("runExtraction", () => {
 
   it("validates, verifies and labels the result", async () => {
     const outcome = await runExtraction(provider(async () => extraction()), PAGES);
-    expect(outcome).toMatchObject({ provider: "gemini", model: "test-model", isSimulated: false, schemaVersion: "1" });
+    expect(outcome).toMatchObject({ provider: "gemini", model: "test-model", isSimulated: false, schemaVersion: "2" });
     expect(outcome.verified.medications).toHaveLength(1);
   });
 

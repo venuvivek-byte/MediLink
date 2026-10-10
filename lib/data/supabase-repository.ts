@@ -4,6 +4,7 @@ import type { Database } from "@/lib/types/database.types";
 import {
   mapAllergy,
   mapAuditEvent,
+  mapDuplicateDecision,
   mapCondition,
   mapDocument,
   mapLabResult,
@@ -135,5 +136,16 @@ export class SupabasePatientRepository implements PatientRepository {
         .limit(200)
     );
     return rows.map(mapAuditEvent);
+  }
+
+  async listDuplicateDecisions() {
+    const rows = this.check(
+      "duplicate decisions",
+      await this.client
+        .from("duplicate_decisions")
+        .select("*")
+        .eq("patient_id", this.patientId)
+    );
+    return rows.map(mapDuplicateDecision).filter((d): d is NonNullable<typeof d> => d !== null);
   }
 }

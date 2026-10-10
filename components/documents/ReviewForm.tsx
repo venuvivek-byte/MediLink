@@ -49,6 +49,7 @@ const LAB_FIELDS: Field[] = [
   { key: "value", label: "Result" },
   { key: "unit", label: "Unit" },
   { key: "reference_range", label: "Reference range (as printed)" },
+  { key: "flag", label: "Flag (as printed, e.g. H or L)" },
   { key: "result_date", label: "Result date", type: "date" },
 ];
 const CONDITION_FIELDS: Field[] = [{ key: "name", label: "Condition / diagnosis" }];
@@ -130,6 +131,7 @@ export function ReviewForm({ review, onConfirm, onCancel }: ReviewFormProps) {
         value: nullable(i.values.value),
         unit: nullable(i.values.unit),
         reference_range: nullable(i.values.reference_range),
+        flag: nullable(i.values.flag),
         result_date: nullable(i.values.result_date),
         ...src(i),
       })),

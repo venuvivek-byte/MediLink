@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildLabSeries, findDuplicateMedications, findRepeatTests } from "@/lib/domain/insights";
+import { buildLabSeries, findDuplicateLabEntries, findDuplicateMedications, findRepeatTests } from "@/lib/domain/insights";
 import { normalizeMedicationName } from "@/lib/domain/normalize";
 import type { LabResult, Medication } from "@/lib/data/types";
 
@@ -20,6 +20,7 @@ function med(overrides: Partial<Medication>): Medication {
     prescriberName: null,
     facilityName: null,
     sourceDocumentId: null,
+    sourcePage: null,
     ...overrides,
   };
 }
@@ -32,9 +33,11 @@ function lab(overrides: Partial<LabResult>): LabResult {
     value: "7.0",
     unit: "%",
     referenceRange: null,
+    reportFlag: null,
     testDate: "2025-01-01",
     reviewStatus: "patient_reviewed",
     sourceDocumentId: null,
+    sourcePage: null,
     ...overrides,
   };
 }
@@ -72,7 +75,50 @@ describe("findDuplicateMedications", () => {
   });
 });
 
+describe("duplicate decisions", () => {
+  it("a 'not a duplicate' decision hides that exact medication group", () => {
+    const a = med({ id: "m-a" });
+    const b = med({ id: "m-b" });
+    expect(findDuplicateMedications([a, b])).toHaveLength(1);
+    expect(findDuplicateMedications([a, b], [{ kind: "medication", recordIds: ["m-b", "m-a"] }])).toEqual([]);
+  });
+
+  it("the alert comes back when a new record joins the group", () => {
+    const records = [med({ id: "m-a" }), med({ id: "m-b" }), med({ id: "m-c" })];
+    const alerts = findDuplicateMedications(records, [{ kind: "medication", recordIds: ["m-a", "m-b"] }]);
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0].records.map((r) => r.id)).toEqual(["m-a", "m-b", "m-c"]);
+  });
+
+  it("a lab decision never hides a medication alert (kinds are separate)", () => {
+    expect(findDuplicateMedications([med({ id: "x" }), med({ id: "y" })], [{ kind: "lab_result", recordIds: ["x", "y"] }])).toHaveLength(1);
+  });
+});
+
+describe("findDuplicateLabEntries", () => {
+  it("flags the same test, date, value and unit entered twice", () => {
+    const alerts = findDuplicateLabEntries([lab({ id: "l1", value: "7.2" }), lab({ id: "l2", value: " 7.2 " }), lab({ id: "l3", value: "6.9" })]);
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0].records.map((r) => r.id)).toEqual(["l1", "l2"]);
+  });
+
+  it("does not flag different dates, values or units", () => {
+    expect(findDuplicateLabEntries([lab({ testDate: "2025-01-01" }), lab({ testDate: "2025-01-02" })])).toEqual([]);
+    expect(findDuplicateLabEntries([lab({ value: "7.0" }), lab({ value: "7.1" })])).toEqual([]);
+    expect(findDuplicateLabEntries([lab({ unit: "%" }), lab({ unit: "mmol/mol" })])).toEqual([]);
+  });
+
+  it("respects the patient's decision", () => {
+    const labs = [lab({ id: "l1" }), lab({ id: "l2" })];
+    expect(findDuplicateLabEntries(labs, [{ kind: "lab_result", recordIds: ["l1", "l2"] }])).toEqual([]);
+  });
+});
+
 describe("findRepeatTests", () => {
+  it("does not report same-day entries as a repeat (those are possible duplicates)", () => {
+    expect(findRepeatTests([lab({ testDate: "2025-04-18" }), lab({ testDate: "2025-04-18" })])).toEqual([]);
+  });
+
   it("flags the same test within 90 days and reports the gap", () => {
     const alerts = findRepeatTests([lab({ testDate: "2025-04-18" }), lab({ testDate: "2025-07-15" })]);
     expect(alerts).toHaveLength(1);

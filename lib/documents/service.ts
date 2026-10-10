@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getConfiguredProvider, runExtraction } from "@/lib/ai";
 import { getOcrProvider } from "@/lib/ocr";
 import { GEMINI_VISION_OCR } from "@/lib/ocr/gemini";
+import { EXTRACTION_SCHEMA_VERSION } from "@/lib/ai/extraction-schema";
 import { buildDocumentPath, DOCUMENTS_BUCKET } from "@/lib/storage/paths";
 import { mapDocument } from "@/lib/data/mappers";
 import type { DocumentSummary } from "@/lib/data/types";
@@ -218,7 +219,7 @@ export async function processDocument(session: Session, documentId: string): Pro
         document_id: documentId,
         patient_id: patientId,
         status: "pending",
-        schema_version: "1",
+        schema_version: EXTRACTION_SCHEMA_VERSION,
         text_source: usedOcr && usedPdfText ? "mixed" : usedOcr ? "ocr" : "pdf_text",
         ocr_provider: usedOcr ? getOcrProvider(config).name : null,
         ai_provider: provider.name,

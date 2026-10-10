@@ -272,7 +272,10 @@ describe("confirmReview", () => {
       extractionId,
       header: { document_type: "prescription", document_date: "", provider_name: " Dr. Nair ", facility_name: "" },
       medications: [{ name: "Tab Metformin", strength: "500 mg", frequency: "", source_page: 1, source_excerpt: "Tab Metformin 500 mg BD" }],
-      lab_results: [],
+      lab_results: [
+        { test_name: "LDL", value: "132", unit: "mg/dL", flag: " H ", source_page: 1, source_excerpt: "LDL 132 H" },
+        { test_name: "TSH", value: "2.4", flag: "", source_page: 1, source_excerpt: "TSH 2.4" },
+      ],
       conditions: [],
       allergies: [],
     });
@@ -284,6 +287,9 @@ describe("confirmReview", () => {
     const review = args.p_review as { header: Record<string, unknown>; medications: Record<string, unknown>[] };
     expect(review.header).toEqual({ document_type: "prescription", document_date: null, provider_name: "Dr. Nair", facility_name: null });
     expect(review.medications[0]).toMatchObject({ status: "unknown", frequency: null, normalized_name: "metformin" });
+    const labs = (args.p_review as { lab_results: Record<string, unknown>[] }).lab_results;
+    // The report's own flag is passed through (trimmed); no flag stays null.
+    expect(labs.map((l) => l.flag)).toEqual(["H", null]);
   });
 
   it("reports a database failure without claiming success", async () => {

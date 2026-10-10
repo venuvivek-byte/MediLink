@@ -22,13 +22,14 @@ export default function DashboardPage() {
 
 async function DashboardContent() {
   const repo = await getPatientRepository();
-  const [profile, medications, labs, events, allergies, conditions] = await Promise.all([
+  const [profile, medications, labs, events, allergies, conditions, decisions] = await Promise.all([
     repo.getProfile(),
     repo.listMedications(),
     repo.listLabResults(),
     repo.listTimelineEvents(),
     repo.listAllergies(),
     repo.listConditions(),
+    repo.listDuplicateDecisions(),
   ]);
 
   return (
@@ -44,7 +45,7 @@ async function DashboardContent() {
           conditions={conditions}
           latestLab={labs[0] ?? null}
         />
-        <AlertsPanel duplicates={findDuplicateMedications(medications)} repeats={findRepeatTests(labs)} />
+        <AlertsPanel duplicates={findDuplicateMedications(medications, decisions)} repeats={findRepeatTests(labs)} />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <RecentActivity events={events.slice(0, 4)} />

@@ -385,6 +385,33 @@ export type Database = {
         }
         Relationships: []
       }
+      duplicate_decisions: {
+        Row: {
+          created_at: string
+          decision: string
+          id: string
+          patient_id: string
+          record_ids: string[]
+          record_kind: string
+        }
+        Insert: {
+          created_at?: string
+          decision?: string
+          id?: string
+          patient_id: string
+          record_ids: string[]
+          record_kind: string
+        }
+        Update: {
+          created_at?: string
+          decision?: string
+          id?: string
+          patient_id?: string
+          record_ids?: string[]
+          record_kind?: string
+        }
+        Relationships: []
+      }
       emergency_access: {
         Row: {
           consent_given_at: string
@@ -453,6 +480,7 @@ export type Database = {
           normalized_test_name: string | null
           patient_id: string
           reference_range: string | null
+          report_flag: string | null
           result_value: string | null
           source_document_id: string | null
           source_excerpt: string | null
@@ -473,6 +501,7 @@ export type Database = {
           normalized_test_name?: string | null
           patient_id: string
           reference_range?: string | null
+          report_flag?: string | null
           result_value?: string | null
           source_document_id?: string | null
           source_excerpt?: string | null
@@ -493,6 +522,7 @@ export type Database = {
           normalized_test_name?: string | null
           patient_id?: string
           reference_range?: string | null
+          report_flag?: string | null
           result_value?: string | null
           source_document_id?: string | null
           source_excerpt?: string | null
@@ -878,6 +908,14 @@ export type Database = {
         Args: { p_extraction_id: string; p_review: Json }
         Returns: string
       }
+      delete_health_record: {
+        Args: { p_id: string; p_kind: string }
+        Returns: undefined
+      }
+      dismiss_duplicate: {
+        Args: { p_kind: string; p_record_ids: string[] }
+        Returns: undefined
+      }
       record_audit_event: {
         Args: {
           p_details?: Json
@@ -886,6 +924,15 @@ export type Database = {
           p_share_id?: string
         }
         Returns: string
+      }
+      update_medication: {
+        Args: {
+          p_end_date: string
+          p_medication_id: string
+          p_start_date: string
+          p_status: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

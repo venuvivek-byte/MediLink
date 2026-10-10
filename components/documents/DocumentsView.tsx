@@ -83,7 +83,7 @@ function LiveDocuments({ documents, maxUploadBytes }: DocumentsViewProps) {
   };
 
   const remove = (doc: DocumentSummary) => {
-    if (!window.confirm(`Delete "${doc.filename}"? The original file is removed. Records you already confirmed are kept.`)) return;
+    if (!window.confirm(`Delete "${doc.filename}"? The original file is removed. Records you already confirmed are kept, but will no longer link to their source.`)) return;
     setBusyId(doc.id);
     startTransition(async () => {
       const result = await deleteDocumentAction(doc.id);

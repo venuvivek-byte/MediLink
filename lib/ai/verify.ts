@@ -48,10 +48,22 @@ export function normalizeForMatch(value: string): string {
     .trim();
 }
 
+/**
+ * True if `token` appears in `text` as a separate token (bounded by the start,
+ * the end, whitespace or brackets). Short markers such as a lab flag "H" would
+ * otherwise "match" inside any word ("HbA1c").
+ */
+export function containsToken(text: string, token: string): boolean {
+  const escaped = normalizeForMatch(token).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[\\s()[\\]|,;:])${escaped}($|[\\s()[\\]|,;:])`).test(normalizeForMatch(text));
+}
+
 function verifyItem<T extends { evidence: { page: number; quote: string }; uncertain?: boolean }>(
   item: T,
   keyValues: (string | null | undefined)[],
-  pageText: Map<number, string>
+  pageText: Map<number, string>,
+  /** Short values that must appear as a separate token in the item's own quote. */
+  quoteTokens: (string | null | undefined)[] = []
 ): Verified<T> {
   const flags: ReviewFlag[] = [];
   const page = pageText.get(item.evidence.page);
@@ -59,7 +71,9 @@ function verifyItem<T extends { evidence: { page: number; quote: string }; uncer
     flags.push("page_not_found");
   } else {
     if (!page.includes(normalizeForMatch(item.evidence.quote))) flags.push("quote_not_found");
-    const missingValue = keyValues.some((v) => v && !page.includes(normalizeForMatch(v)));
+    const missingValue =
+      keyValues.some((v) => v && !page.includes(normalizeForMatch(v))) ||
+      quoteTokens.some((t) => t && !containsToken(item.evidence.quote, t));
     if (missingValue) flags.push("value_not_found");
   }
   if (item.uncertain) flags.push("model_uncertain");
@@ -103,7 +117,7 @@ export function verifyExtraction(extraction: Extraction, pages: PageText[]): Ver
     },
     diagnoses: extraction.diagnoses.map((d) => verifyItem(d, [d.name], pageText)),
     medications: extraction.medications.map((m) => verifyItem(m, [m.name], pageText)),
-    lab_results: extraction.lab_results.map((l) => verifyItem(l, [l.test_name, l.value], pageText)),
+    lab_results: extraction.lab_results.map((l) => verifyItem(l, [l.test_name, l.value], pageText, [l.flag])),
     allergies: extraction.allergies.map((a) => verifyItem(a, [a.substance], pageText)),
     instructions: extraction.instructions.map((i) => verifyItem(i, [], pageText)),
     unreadable_notes: extraction.unreadable_notes,

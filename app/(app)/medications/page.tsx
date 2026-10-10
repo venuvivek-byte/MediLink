@@ -5,7 +5,11 @@ import Header from "@/components/layout/Header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { VerificationBadge } from "@/components/ui/VerificationBadge";
+import { MedicationEditor } from "@/components/medications/MedicationEditor";
+import { DeleteRecordButton, NotDuplicateButton } from "@/components/records/RecordControls";
+import { SourceLink, sourceOf } from "@/components/records/SourceLink";
 import { getPatientRepository } from "@/lib/data";
+import { getPublicConfig } from "@/lib/config/env";
 import type { Medication, MedicationStatus } from "@/lib/data/types";
 import { findDuplicateMedications } from "@/lib/domain/insights";
 import { formatDate } from "@/lib/format";
@@ -13,14 +17,14 @@ import { formatDate } from "@/lib/format";
 export const metadata = { title: "Medications" };
 
 const SECTIONS: { status: MedicationStatus; title: string; description: string }[] = [
-  { status: "current", title: "Current", description: "Recorded as currently taken." },
+  { status: "current", title: "Currently taking", description: "You marked these as medicines you take now." },
   {
     status: "uncertain",
-    title: "Status uncertain",
-    description: "The source does not say whether these are still taken. Confirm with your doctor.",
+    title: "Not sure if still taken",
+    description: "The record does not say whether you still take these. Update each one, or check with your doctor.",
   },
-  { status: "historical", title: "Historical", description: "From older records; not assumed to be current." },
-  { status: "discontinued", title: "Discontinued", description: "Recorded as stopped." },
+  { status: "discontinued", title: "Stopped", description: "Marked as stopped." },
+  { status: "historical", title: "Past prescriptions", description: "From older records; not current." },
 ];
 
 // Patient data is request-time: stream it behind Suspense so navigation shows
@@ -34,8 +38,15 @@ export default function MedicationsPage() {
 }
 
 async function MedicationsContent() {
-  const medications = await (await getPatientRepository()).listMedications();
-  const duplicates = findDuplicateMedications(medications);
+  const repo = await getPatientRepository();
+  const [medications, decisions, documents] = await Promise.all([
+    repo.listMedications(),
+    repo.listDuplicateDecisions(),
+    repo.listDocuments(),
+  ]);
+  const live = getPublicConfig().mode === "live";
+  const documentNames = Object.fromEntries(documents.map((d) => [d.id, d.filename]));
+  const duplicates = findDuplicateMedications(medications, decisions);
   const flagged = new Set(duplicates.flatMap((d) => d.records.map((r) => r.id)));
 
   return (
@@ -43,16 +54,40 @@ async function MedicationsContent() {
       <Header title="Medications" subtitle="Every medicine found in your records, with its source" />
       <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto w-full">
         {duplicates.map((alert) => (
-          <div key={alert.key} role="note" className="p-4 rounded-xl border border-health-amber/40 bg-health-amber/10 flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-health-amber shrink-0 mt-0.5" aria-hidden="true" />
-            <div className="space-y-0.5">
-              <h2 className="text-sm font-semibold">Possible duplicate: {alert.displayName}</h2>
-              <p className="text-xs text-muted-foreground">
-                {alert.reason} This may be intentional (for example, a dose change). Check with your doctor or
-                pharmacist before changing anything.
-              </p>
+          <section
+            key={alert.key}
+            aria-label={`Possible duplicate: ${alert.displayName}`}
+            className="p-4 rounded-xl border border-health-amber/40 bg-health-amber/10 space-y-3"
+          >
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-health-amber shrink-0 mt-0.5" aria-hidden="true" />
+              <div className="space-y-0.5">
+                <h2 className="text-sm font-semibold">Possible duplicate: {alert.displayName}</h2>
+                <p className="text-xs text-muted-foreground">
+                  {alert.reason} This may be intentional (for example, a dose change). Check with your doctor or
+                  pharmacist before changing anything.
+                </p>
+              </div>
             </div>
-          </div>
+            <ul className="space-y-1 pl-8 text-xs">
+              {alert.records.map((r) => (
+                <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="font-medium">
+                    {r.name}
+                    {r.strength ? ` · ${r.strength}` : ""}
+                    {r.frequency ? ` · ${r.frequency}` : ""}
+                  </span>
+                  <SourceLink source={sourceOf(r, documentNames)} canOpen={live} />
+                </li>
+              ))}
+            </ul>
+            {live && (
+              <div className="pl-8 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                <NotDuplicateButton kind="medication" recordIds={alert.records.map((r) => r.id)} />
+                <span>or delete the extra entry from its card below.</span>
+              </div>
+            )}
+          </section>
         ))}
 
         {medications.length === 0 && (
@@ -80,7 +115,13 @@ async function MedicationsContent() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {items.map((med) => (
-                  <MedicationCard key={med.id} med={med} flagged={flagged.has(med.id)} />
+                  <MedicationCard
+                    key={med.id}
+                    med={med}
+                    flagged={flagged.has(med.id)}
+                    live={live}
+                    documentNames={documentNames}
+                  />
                 ))}
               </div>
             </section>
@@ -101,7 +142,17 @@ async function MedicationsContent() {
   );
 }
 
-function MedicationCard({ med, flagged }: { med: Medication; flagged: boolean }) {
+function MedicationCard({
+  med,
+  flagged,
+  live,
+  documentNames,
+}: {
+  med: Medication;
+  flagged: boolean;
+  live: boolean;
+  documentNames: Record<string, string>;
+}) {
   return (
     <Card className={flagged ? "border-health-amber/50" : "border-border/80"}>
       <CardHeader className="pb-2 flex flex-row items-start justify-between gap-2">
@@ -137,7 +188,7 @@ function MedicationCard({ med, flagged }: { med: Medication; flagged: boolean })
             <dd className="font-medium">{formatDate(med.startDate)}</dd>
           </div>
           <div>
-            <dt className="text-muted-foreground text-[10px]">Ended</dt>
+            <dt className="text-muted-foreground text-[10px]">Stopped</dt>
             <dd className="font-medium">{med.endDate ? formatDate(med.endDate) : "Not stated"}</dd>
           </div>
         </dl>
@@ -151,6 +202,13 @@ function MedicationCard({ med, flagged }: { med: Medication; flagged: boolean })
             {med.prescriberName ?? "Prescriber not stated"}
           </span>
         </div>
+        <SourceLink source={sourceOf(med, documentNames)} canOpen={live} />
+        {live && (
+          <div className="flex flex-wrap items-start justify-between gap-2 pt-1 border-t">
+            <MedicationEditor medication={med} />
+            <DeleteRecordButton kind="medication" id={med.id} label={med.name} />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

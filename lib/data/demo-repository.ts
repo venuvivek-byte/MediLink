@@ -71,4 +71,9 @@ export class DemoPatientRepository implements PatientRepository {
   async listAuditEvents() {
     return this.own(DEMO_AUDIT_LOGS).map(mapAuditEvent).sort(byDateDesc((a) => a.occurredAt));
   }
+
+  /** Demo mode is read-only: no decisions are ever stored. */
+  async listDuplicateDecisions() {
+    return [];
+  }
 }

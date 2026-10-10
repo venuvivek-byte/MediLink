@@ -8,6 +8,7 @@ import type {
   AuditEvent,
   Condition,
   DocumentSummary,
+  DuplicateDecision,
   DocumentType,
   EmergencyContact,
   LabResult,
@@ -117,6 +118,7 @@ export function mapTimelineEvent(row: Tables<"medical_events">): TimelineEvent {
     facilityName: row.facility_name,
     reviewStatus: toReviewStatus(row.verification_status),
     sourceDocumentId: row.document_id,
+    sourcePage: row.source_page,
   };
 }
 
@@ -137,6 +139,7 @@ export function mapMedication(row: Tables<"medications">): Medication {
     prescriberName: row.prescriber_name,
     facilityName: row.facility_name,
     sourceDocumentId: row.source_document_id,
+    sourcePage: row.source_page,
   };
 }
 
@@ -148,9 +151,11 @@ export function mapLabResult(row: Tables<"lab_results">): LabResult {
     value: row.result_value,
     unit: row.unit,
     referenceRange: row.reference_range,
+    reportFlag: row.report_flag?.trim() || null,
     testDate: row.test_date,
     reviewStatus: toReviewStatus(row.verification_status),
     sourceDocumentId: row.source_document_id,
+    sourcePage: row.source_page,
   };
 }
 
@@ -162,6 +167,7 @@ export function mapCondition(row: Tables<"conditions">): Condition {
     status,
     reviewStatus: toReviewStatus(row.verification_status),
     sourceDocumentId: row.source_document_id,
+    sourcePage: row.source_page,
   };
 }
 
@@ -172,7 +178,13 @@ export function mapAllergy(row: Tables<"allergies">): Allergy {
     reaction: row.reaction,
     reviewStatus: toReviewStatus(row.verification_status),
     sourceDocumentId: row.source_document_id,
+    sourcePage: row.source_page,
   };
+}
+
+export function mapDuplicateDecision(row: Tables<"duplicate_decisions">): DuplicateDecision | null {
+  if (row.record_kind !== "medication" && row.record_kind !== "lab_result") return null;
+  return { kind: row.record_kind, recordIds: [...row.record_ids].sort() };
 }
 
 const SHARE_CATEGORIES: ShareCategory[] = [

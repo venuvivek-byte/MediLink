@@ -63,6 +63,8 @@ export const reviewSubmissionSchema = z
           value: optionalText(60),
           unit: optionalText(40),
           reference_range: optionalText(120),
+          // High/low marker as printed on the report; never computed.
+          flag: optionalText(20),
           result_date: isoDate,
           ...source,
         })

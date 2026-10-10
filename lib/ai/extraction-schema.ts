@@ -1,4 +1,4 @@
-// Structured extraction contract (schema version 1).
+// Structured extraction contract (schema version 2: adds the lab report flag).
 //
 // Rules encoded here:
 // - Unknown/unreadable values are null, never guessed.
@@ -9,7 +9,7 @@
 // - The document date and the date of a lab result/encounter are separate.
 import { z } from "zod/v4";
 
-export const EXTRACTION_SCHEMA_VERSION = "1";
+export const EXTRACTION_SCHEMA_VERSION = "2";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -77,6 +77,10 @@ export const extractionSchema = z.object({
         value: text(60, "Result value exactly as written, including qualifiers like '<' or 'positive'."),
         unit: text(40, "Unit exactly as written, or null."),
         reference_range: text(120, "Reference range exactly as printed on the report, or null."),
+        flag: text(
+          20,
+          "High/low marker exactly as printed next to this result (e.g. 'H', 'L', '*', 'High'), or null if none is printed. Never derive it from the value or range."
+        ),
         result_date: isoDate.describe("Sample/result date if written."),
         uncertain,
         evidence,

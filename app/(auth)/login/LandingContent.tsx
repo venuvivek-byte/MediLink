@@ -191,7 +191,6 @@ export function LandingContent({ mode, notice }: LandingContentProps) {
 
           <div className="flex items-center gap-6">
             <a href="#about-section" className="hover:text-slate-800 transition-colors">About</a>
-            <Link href="/emergency" className="hover:text-slate-800 transition-colors">Emergency Access</Link>
           </div>
 
           <p>© {new Date().getFullYear()} MediLink. Patient-controlled records.</p>

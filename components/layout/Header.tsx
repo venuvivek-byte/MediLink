@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LogOut, Settings, Upload } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { LogOut, Settings } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -16,7 +14,7 @@ import {
 import { useShell, useSignOut } from "./ShellContext";
 
 interface HeaderProps {
-  title: string;
+  title?: string;
   subtitle?: string;
 }
 
@@ -33,40 +31,52 @@ function initialsOf(name: string): string {
 }
 
 export default function Header({ title, subtitle }: HeaderProps) {
-  const { displayName, bloodGroup } = useShell();
+  const { displayName, bloodGroup, mode } = useShell();
   const handleSignOut = useSignOut();
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between gap-4 px-4 md:px-8 h-16 border-b border-border bg-background/90 backdrop-blur">
-      <div className="min-w-0">
-        <h1 className="text-xl md:text-2xl font-bold tracking-tight truncate">{title}</h1>
-        {subtitle && <p className="text-xs md:text-sm text-muted-foreground truncate">{subtitle}</p>}
+    <header className="sticky top-0 z-30 flex items-center justify-between gap-4 px-4 sm:px-8 h-20 border-b border-slate-200/70 bg-white/80 backdrop-blur-md">
+      <div className="flex items-center gap-3 min-w-0">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100 hidden sm:inline-block shrink-0">
+          HIPAA Compliant Vault
+        </span>
+        {title && (
+          <div className="min-w-0 sm:hidden">
+            <h1 className="text-base font-semibold tracking-tight truncate text-slate-900">{title}</h1>
+            {subtitle && <p className="text-xs text-muted-foreground truncate">{subtitle}</p>}
+          </div>
+        )}
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
-        <Link href="/documents" className={cn(buttonVariants({ size: "lg" }), "hidden sm:inline-flex gap-2 px-3.5")}>
-          <Upload className="w-4 h-4" aria-hidden="true" />
-          Upload document
-        </Link>
-
+      <div className="flex items-center gap-3 sm:gap-4 shrink-0">
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label="Account menu"
-            className="flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded-xl cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex items-center gap-3 p-1.5 hover:bg-slate-50 rounded-xl cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-vault-600 transition-colors"
           >
-            <Avatar className="w-8 h-8">
-              <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
+            <Avatar className="w-9 h-9 ring-2 ring-emerald-100 shadow-sm">
+              <AvatarFallback className="bg-vault-800 text-white font-bold text-xs">
                 {initialsOf(displayName)}
               </AvatarFallback>
             </Avatar>
-            <span className="hidden lg:block text-sm font-medium max-w-40 truncate">{displayName}</span>
+            <div className="hidden sm:block text-left">
+              <div className="text-sm font-semibold text-slate-900 leading-snug max-w-44 truncate">
+                {displayName}
+              </div>
+              <div className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                {mode === "demo" ? "Demo Patient" : "Verified Patient"}
+              </div>
+            </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
               <div className="flex flex-col">
                 <span className="font-semibold truncate">{displayName}</span>
                 {bloodGroup && (
-                  <span className="text-xs text-muted-foreground font-normal">Blood group: {bloodGroup}</span>
+                  <span className="text-xs text-muted-foreground font-normal">
+                    Blood group: {bloodGroup}
+                  </span>
                 )}
               </div>
             </DropdownMenuLabel>
@@ -78,7 +88,11 @@ export default function Header({ title, subtitle }: HeaderProps) {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive" className="cursor-pointer" onClick={handleSignOut}>
+            <DropdownMenuItem
+              variant="destructive"
+              className="cursor-pointer"
+              onClick={handleSignOut}
+            >
               <LogOut className="w-4 h-4 mr-2" aria-hidden="true" />
               Sign out
             </DropdownMenuItem>

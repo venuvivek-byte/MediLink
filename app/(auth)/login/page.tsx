@@ -2,14 +2,19 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { getPublicConfig } from "@/lib/config/env";
-import { AuthCard } from "../AuthCard";
-import { LoginForm } from "./LoginForm";
+import { LandingHero } from "./LandingHero";
+import { LandingContent } from "./LandingContent";
 
-export const metadata = { title: "Sign in" };
+export const metadata = {
+  title: "Your health. One secure place — MediLink",
+  description:
+    "Every prescription, report, and medical visit. Organized, accessible, and always within reach.",
+};
 
 const ERROR_MESSAGES: Record<string, string> = {
   email_confirmed_sign_in: "Your email is confirmed. Please sign in.",
-  email_link_invalid: "That confirmation link is invalid or has expired. Try signing in, or sign up again for a new link.",
+  email_link_invalid:
+    "That confirmation link is invalid or has expired. Try signing in, or sign up again for a new link.",
   demo_mode: "Account sign-in is not used in demo mode.",
   oauth_cancelled: "Google sign-in was cancelled.",
   oauth_failed: "Google sign-in did not complete. Please try again.",
@@ -19,7 +24,7 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export default function LoginPage({ searchParams }: { searchParams: SearchParams }) {
   return (
-    <Suspense fallback={<AuthCard title="Sign in" tagline="Loading…">{null}</AuthCard>}>
+    <Suspense fallback={<div className="min-h-screen w-full bg-slate-900 animate-pulse" />}>
       <LoginContent searchParams={searchParams} />
     </Suspense>
   );
@@ -33,16 +38,9 @@ async function LoginContent({ searchParams }: { searchParams: SearchParams }) {
   const notice = typeof errorKey === "string" ? ERROR_MESSAGES[errorKey] : undefined;
 
   return (
-    <AuthCard
-      title={mode === "demo" ? "Explore the demo" : "Sign in to your records"}
-      tagline="Your medical records, organised and under your control"
-    >
-      {notice && (
-        <p role="alert" className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
-          {notice}
-        </p>
-      )}
-      <LoginForm mode={mode} />
-    </AuthCard>
+    <div className="min-h-screen flex flex-col w-full overflow-x-hidden">
+      <LandingHero mode={mode} />
+      <LandingContent mode={mode} notice={notice} />
+    </div>
   );
 }

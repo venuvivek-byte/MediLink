@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Heart, LogOut } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import { LogOut, Settings } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -25,89 +24,110 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "hidden md:flex flex-col fixed left-0 top-0 bottom-0 z-40 border-r border-sidebar-border bg-sidebar transition-all duration-300",
+        "hidden md:flex flex-col fixed left-0 top-0 bottom-0 z-40 border-r border-slate-200/80 bg-white transition-all duration-300",
         collapsed ? "w-[68px]" : "w-[260px]"
       )}
+      data-purpose="primary-sidebar"
     >
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-5 h-16 shrink-0">
-        <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-          <Heart className="w-5 h-5 text-primary-foreground" aria-hidden="true" />
-        </div>
-        {!collapsed && (
-          <div className="flex flex-col">
-            <span className="font-bold text-[15px] leading-tight">MyHealthVault</span>
-            <span className="text-xs text-muted-foreground leading-tight">
-              {mode === "demo" ? "Demo mode · fictional data" : "Your health records"}
-            </span>
+      <div className={cn("p-6", collapsed && "p-4")}>
+        {/* App Brand Logo */}
+        <div className={cn("flex items-center gap-3 mb-8", collapsed && "justify-center mb-6")}>
+          <div className="w-10 h-10 rounded-xl bg-vault-800 flex items-center justify-center text-white shadow-md shadow-emerald-900/10 shrink-0">
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+              <path d="M12 9v4" />
+              <path d="M10 11h4" />
+            </svg>
           </div>
-        )}
+          {!collapsed && (
+            <div>
+              <span className="text-lg font-bold tracking-tight text-slate-900 leading-tight block">
+                MediLink
+              </span>
+              <span className="text-xs font-medium text-slate-400">
+                {mode === "demo" ? "Health Vault (Demo)" : "Health Vault"}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Navigation Links */}
+        <nav aria-label="Main" className="space-y-1.5">
+          {NAVIGATION.map((item) => {
+            const isActive = isActivePath(pathname, item.href);
+
+            const linkContent = (
+              <Link
+                key={item.name}
+                href={item.href}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all group",
+                  isActive
+                    ? "bg-emerald-50 text-vault-800 font-semibold shadow-xs"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50",
+                  collapsed && "justify-center px-2"
+                )}
+              >
+                <item.icon
+                  className={cn(
+                    "shrink-0 transition-colors",
+                    collapsed ? "w-5 h-5" : "w-5 h-5",
+                    isActive ? "text-vault-800" : "text-slate-400 group-hover:text-slate-600"
+                  )}
+                  aria-hidden="true"
+                />
+                {!collapsed && <span>{item.name}</span>}
+              </Link>
+            );
+
+            if (collapsed) {
+              return (
+                <Tooltip key={item.name}>
+                  <TooltipTrigger className="w-full text-left">
+                    {linkContent}
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="font-medium">
+                    {item.name}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            }
+
+            return linkContent;
+          })}
+        </nav>
       </div>
 
-      <Separator className="mx-4 w-auto" />
-
-      {/* Navigation */}
-      <nav aria-label="Main" className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {NAVIGATION.map((item) => {
-          const isActive = isActivePath(pathname, item.href);
-
-          const linkContent = (
-            <Link
-              key={item.name}
-              href={item.href}
-              aria-current={isActive ? "page" : undefined}
-              className={cn(
-                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 group relative",
-                isActive
-                  ? "bg-primary/10 text-primary shadow-sm"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              )}
-            >
-              {isActive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary rounded-r-full" />
-              )}
-              <item.icon
-                className={cn(
-                  "shrink-0 transition-colors",
-                  collapsed ? "w-5 h-5" : "w-[18px] h-[18px]",
-                  isActive
-                    ? "text-primary"
-                    : "text-muted-foreground group-hover:text-foreground"
-                )}
-              />
-              {!collapsed && <span>{item.name}</span>}
-            </Link>
-          );
-
-          if (collapsed) {
-            return (
-              <Tooltip key={item.name}>
-                <TooltipTrigger className="w-full text-left">
-                  {linkContent}
-                </TooltipTrigger>
-                <TooltipContent side="right" className="font-medium">
-                  {item.name}
-                </TooltipContent>
-              </Tooltip>
-            );
-          }
-
-          return linkContent;
-        })}
-      </nav>
-
-      <Separator className="mx-4 w-auto" />
-
-      {/* Bottom section */}
-      <div className="px-3 py-4">
+      {/* Bottom Sidebar Utilities */}
+      <div className={cn("p-6 border-t border-slate-100 space-y-1.5 mt-auto", collapsed && "p-3")}>
+        <Link
+          href="/settings"
+          className={cn(
+            "flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium text-sm transition-all group",
+            collapsed && "justify-center px-2"
+          )}
+        >
+          <Settings className="w-5 h-5 text-slate-400 group-hover:text-slate-600 shrink-0" aria-hidden="true" />
+          {!collapsed && <span>Settings</span>}
+        </Link>
         <button
           onClick={handleSignOut}
           className={cn(
-            "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-200 w-full cursor-pointer",
-            collapsed && "justify-center"
+            "flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 font-medium text-sm transition-all w-full cursor-pointer group",
+            collapsed && "justify-center px-2"
           )}
         >
-          <LogOut className="w-[18px] h-[18px] shrink-0" />
+          <LogOut className="w-5 h-5 text-slate-400 group-hover:text-rose-600 shrink-0" aria-hidden="true" />
           {!collapsed && <span>Sign Out</span>}
         </button>
       </div>

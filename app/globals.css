@@ -54,6 +54,21 @@
   --color-health-amber: var(--health-amber);
   --color-health-rose: var(--health-rose);
   --color-health-indigo: var(--health-indigo);
+
+  /* MediLink Vault Brand Palette */
+  --color-vault-50: #f0fdf9;
+  --color-vault-100: #ccfbef;
+  --color-vault-200: #99f6df;
+  --color-vault-300: #5eead4;
+  --color-vault-400: #2dd4bf;
+  --color-vault-500: #14b8a6;
+  --color-vault-600: #0d9488;
+  --color-vault-700: #0f766e;
+  --color-vault-800: #0d7a5f;
+  --color-vault-900: #064e3b;
+  --color-vault-950: #022c22;
+
+  --font-serif: var(--font-serif, Georgia, Cambria, "Times New Roman", serif);
 }
 
 :root {

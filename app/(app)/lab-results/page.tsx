@@ -9,9 +9,12 @@ import { LabTrendChart } from "@/components/labs/LabTrendChart";
 import { DeleteRecordButton, NotDuplicateButton } from "@/components/records/RecordControls";
 import { SourceLink, sourceOf } from "@/components/records/SourceLink";
 import { getPatientRepository } from "@/lib/data";
-import { getPublicConfig } from "@/lib/config/env";
+import { sessionAccess } from "@/lib/auth/session";
 import { buildLabSeries, findDuplicateLabEntries, findRepeatTests } from "@/lib/domain/insights";
 import { formatDate } from "@/lib/format";
+
+/** Tests with 2+ results get a trend chart, most-measured first. */
+const MAX_CHARTS = 6;
 
 export const metadata = { title: "Lab results" };
 
@@ -32,7 +35,7 @@ async function LabResultsContent() {
     repo.listDuplicateDecisions(),
     repo.listDocuments(),
   ]);
-  const live = getPublicConfig().mode === "live";
+  const { canEdit: live, canOpenFiles } = await sessionAccess();
   const documentNames = Object.fromEntries(documents.map((d) => [d.id, d.filename]));
   const series = buildLabSeries(labs);
   const repeats = findRepeatTests(labs);
@@ -63,7 +66,7 @@ async function LabResultsContent() {
             <ul className="pl-8 space-y-1">
               {d.records.map((r) => (
                 <li key={r.id}>
-                  <SourceLink source={sourceOf(r, documentNames)} canOpen={live} />
+                  <SourceLink source={sourceOf(r, documentNames)} canOpen={canOpenFiles} />
                 </li>
               ))}
             </ul>
@@ -86,22 +89,26 @@ async function LabResultsContent() {
           </div>
         ))}
 
-        {series.slice(0, 3).map((s) => (
-          <Card key={s.key} className="border-border/80">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold">
-                {s.testName} over time <span className="text-muted-foreground font-normal">({s.unit})</span>
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                {s.points.length} results in the same unit.
-                {s.referenceRange ? ` Reference range on the latest report: ${s.referenceRange}.` : ""}
-              </p>
-            </CardHeader>
-            <CardContent>
-              <LabTrendChart series={s} />
-            </CardContent>
-          </Card>
-        ))}
+        {series.length > 0 && (
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {series.slice(0, MAX_CHARTS).map((s) => (
+              <Card key={s.key} className="border-border/80">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-semibold">
+                    {s.testName} over time <span className="text-muted-foreground font-normal">({s.unit})</span>
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {s.points.length} results in the same unit.
+                    {s.referenceRange ? ` Reference range on the latest report: ${s.referenceRange}.` : ""}
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <LabTrendChart series={s} />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
         <Card className="border-border/80">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
@@ -141,7 +148,7 @@ async function LabResultsContent() {
                       Reference range: {lab.referenceRange ?? "Not on report"}
                     </p>
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <SourceLink source={sourceOf(lab, documentNames)} canOpen={live} />
+                      <SourceLink source={sourceOf(lab, documentNames)} canOpen={canOpenFiles} />
                       <div className="flex items-center gap-2">
                         <VerificationBadge status={lab.reviewStatus} />
                         {live && <DeleteRecordButton kind="lab_result" id={lab.id} label={`${lab.testName} result`} />}
@@ -184,7 +191,7 @@ async function LabResultsContent() {
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">{lab.referenceRange ?? "Not on report"}</td>
                         <td className="px-4 py-3">
-                          <SourceLink source={sourceOf(lab, documentNames)} canOpen={live} />
+                          <SourceLink source={sourceOf(lab, documentNames)} canOpen={canOpenFiles} />
                         </td>
                         <td className="px-4 py-3 text-right">
                           <div className="inline-flex flex-col items-end gap-1">

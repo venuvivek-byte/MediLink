@@ -1,0 +1,149 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Length 3218 >>
+stream
+0.05 0.36 0.55 rg
+0 746 595 96 re f
+1 1 1 rg
+BT /F2 20 Tf 50 794 Td (Metro Diagnostics Lab) Tj ET
+1 1 1 rg
+BT /F1 9 Tf 50 774 Td (12 Lake View Road, Chennai 600034) Tj ET
+0.92 0.92 0.92 rg
+BT /F1 8 Tf 50 760 Td (Tel: +91 44 0000 0000  |  This is a synthetic sample document) Tj ET
+0.05 0.36 0.55 rg
+BT /F2 13 Tf 50 714 Td (LABORATORY REPORT) Tj ET
+0.1 0.1 0.1 rg
+BT /F2 10 Tf 425 714 Td (Date: 18-Sep-2026) Tj ET
+0.8 0.8 0.8 RG
+0.6 w 50 700 m 545 700 l S
+0.1 0.1 0.1 rg
+BT /F2 10 Tf 50 680 Td (Patient:) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 142 680 Td (Meera Krishnan) Tj ET
+0.1 0.1 0.1 rg
+BT /F2 10 Tf 310 680 Td (Age / Sex:) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 370 680 Td (40 Y / F) Tj ET
+0.1 0.1 0.1 rg
+BT /F2 10 Tf 50 664 Td (Reported by:) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 142 664 Td (Dr. S. Balaji, Pathologist) Tj ET
+0.1 0.1 0.1 rg
+BT /F2 10 Tf 310 664 Td (Ref. No:) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 370 664 Td (MHV-0013) Tj ET
+0.8 0.8 0.8 RG
+0.6 w 50 650 m 545 650 l S
+0.95 0.96 0.97 rg
+50 622 495 20 re f
+0.1 0.1 0.1 rg
+BT /F2 10 Tf 54 628 Td (Test) Tj ET
+0.1 0.1 0.1 rg
+BT /F2 10 Tf 244 628 Td (Result) Tj ET
+0.1 0.1 0.1 rg
+BT /F2 10 Tf 324 628 Td (Unit) Tj ET
+0.1 0.1 0.1 rg
+BT /F2 10 Tf 394 628 Td (Reference range) Tj ET
+0.1 0.1 0.1 rg
+BT /F2 10 Tf 504 628 Td (Flag) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 54 606 Td (TSH) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 244 606 Td (2.4) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 324 606 Td (mIU/L) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 394 606 Td (0.4-4.0) Tj ET
+0.9 0.9 0.9 RG
+0.4 w 50 598 m 545 598 l S
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 54 584 Td (Hemoglobin) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 244 584 Td (13.1) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 324 584 Td (g/dL) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 394 584 Td (12.0-15.5) Tj ET
+0.9 0.9 0.9 RG
+0.4 w 50 576 m 545 576 l S
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 54 562 Td (25-OH Vitamin D) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 244 562 Td (41) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 324 562 Td (ng/mL) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 394 562 Td (30-100) Tj ET
+0.9 0.9 0.9 RG
+0.4 w 50 554 m 545 554 l S
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 54 540 Td (LDL Cholesterol) Tj ET
+0.75 0.1 0.1 rg
+BT /F2 10 Tf 244 540 Td (118) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 324 540 Td (mg/dL) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 394 540 Td (<100) Tj ET
+0.75 0.1 0.1 rg
+BT /F2 10 Tf 504 540 Td (H) Tj ET
+0.9 0.9 0.9 RG
+0.4 w 50 532 m 545 532 l S
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 54 518 Td (Fasting Blood Sugar) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 244 518 Td (98) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 324 518 Td (mg/dL) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 394 518 Td (70-100) Tj ET
+0.9 0.9 0.9 RG
+0.4 w 50 510 m 545 510 l S
+0.4 0.4 0.4 rg
+BT /F1 8 Tf 50 488 Td (H = above reference range, L = below reference range, as determined by the reporting laboratory.) Tj ET
+0.1 0.1 0.1 rg
+BT /F2 10 Tf 375 150 Td (Dr. S. Balaji, Pathologist) Tj ET
+0.6 0.6 0.6 RG
+0.6 w 50 165 m 545 165 l S
+0.4 0.4 0.4 rg
+BT /F1 8 Tf 375 136 Td (Authorised signatory) Tj ET
+0.98 0.94 0.85 rg
+50 50 495 34 re f
+0.55 0.35 0.05 rg
+BT /F2 9 Tf 60 70 Td (SYNTHETIC SAMPLE - not a real patient, doctor or laboratory.) Tj ET
+0.55 0.35 0.05 rg
+BT /F1 8 Tf 60 57 Td (Generated for the MyHealthVault "Try sample" demo. Not for clinical use.) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Title (Metro_Diagnostics_Sep2026.pdf) /Producer (MyHealthVault sample generator) >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000348 00000 n 
+0000000450 00000 n 
+0000003720 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R /Info 7 0 R >>
+startxref
+3823
+%%EOF

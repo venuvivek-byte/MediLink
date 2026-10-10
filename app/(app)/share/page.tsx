@@ -4,7 +4,8 @@ import { PageSkeleton } from "@/components/layout/PageSkeleton";
 import { ShareView } from "@/components/share/ShareView";
 import { getPatientRepository } from "@/lib/data";
 import { getConfig } from "@/lib/config/env";
-import { DEMO_SHARE_PIN, DEMO_SHARE_TOKEN } from "@/lib/demo/data";
+import { requireSession } from "@/lib/auth/session";
+import { datasetForPatient } from "@/lib/demo/datasets";
 import { isLocked, shareState } from "@/lib/sharing/policy";
 
 export const metadata = { title: "Share records" };
@@ -27,10 +28,10 @@ async function ShareContent() {
     locked: isLocked(share.lockedUntil),
   }));
   const config = getConfig();
-  const demo =
-    config.mode === "demo"
-      ? { url: `${config.appUrl}/share/${DEMO_SHARE_TOKEN}`, pin: DEMO_SHARE_PIN }
-      : null;
+  const session = await requireSession();
+  // Read-only sessions show their dataset's fixed example link instead of creating one.
+  const links = session.kind === "demo" ? datasetForPatient(session.patientId)?.publicLinks : undefined;
+  const demo = links ? { url: `${config.appUrl}/share/${links.shareToken}`, pin: links.sharePin } : null;
 
   return (
     <div className="flex-1 flex flex-col">

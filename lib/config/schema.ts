@@ -44,12 +44,27 @@ export interface AppConfig {
    * process.env by the provider, never stored here.
    */
   fallback: { provider: "groq"; model: string; visionModel: string } | null;
+  /**
+   * Second backup, tried only when Groq is also unavailable (or not set).
+   * Null when OPENROUTER_API_KEY is not set. Defaults are FREE models.
+   */
+  secondFallback: { provider: "openrouter"; model: string; visionModel: string } | null;
   upload: { maxBytes: number };
 }
 
 /** Defaults checked against Groq's model list on 2026-10-10; override with GROQ_MODEL / GROQ_VISION_MODEL. */
 export const GROQ_DEFAULT_MODEL = "openai/gpt-oss-120b";
 export const GROQ_DEFAULT_VISION_MODEL = "qwen/qwen3.8-27b";
+
+/**
+ * Google Gemma 4 on OpenRouter's free tier: reads images and supports JSON
+ * output. Free models are often rate-limited, so two are listed: OpenRouter
+ * tries the second when the first is busy. Checked against OpenRouter's
+ * model list on 2026-10-10; override with OPENROUTER_MODEL /
+ * OPENROUTER_VISION_MODEL (comma-separated, in order of preference).
+ */
+export const OPENROUTER_DEFAULT_MODEL = "google/gemma-4-31b-it:free,google/gemma-4-26b-a4b-it:free";
+export const OPENROUTER_DEFAULT_VISION_MODEL = OPENROUTER_DEFAULT_MODEL;
 
 const PLACEHOLDER_PATTERN = /^(your[-_]|<|changeme|placeholder)|your-project/i;
 
@@ -89,6 +104,9 @@ const rawEnvSchema = z.object({
   GROQ_API_KEY: optionalString,
   GROQ_MODEL: optionalString,
   GROQ_VISION_MODEL: optionalString,
+  OPENROUTER_API_KEY: optionalString,
+  OPENROUTER_MODEL: optionalString,
+  OPENROUTER_VISION_MODEL: optionalString,
   MAX_UPLOAD_SIZE_MB: optionalString,
 });
 
@@ -241,6 +259,13 @@ export function parseConfig(env: Record<string, string | undefined>): AppConfig 
           provider: "groq",
           model: raw.GROQ_MODEL ?? GROQ_DEFAULT_MODEL,
           visionModel: raw.GROQ_VISION_MODEL ?? GROQ_DEFAULT_VISION_MODEL,
+        }
+      : null,
+    secondFallback: raw.OPENROUTER_API_KEY
+      ? {
+          provider: "openrouter",
+          model: raw.OPENROUTER_MODEL ?? OPENROUTER_DEFAULT_MODEL,
+          visionModel: raw.OPENROUTER_VISION_MODEL ?? OPENROUTER_DEFAULT_VISION_MODEL,
         }
       : null,
     upload: { maxBytes: Math.floor(maxUploadMb * 1024 * 1024) },

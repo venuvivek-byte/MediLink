@@ -2,10 +2,10 @@ import "server-only";
 import type { Session } from "@/lib/auth/session";
 import { getConfig } from "@/lib/config/env";
 import { createClient } from "@/lib/supabase/server";
-import { getConfiguredProvider, getFallbackProvider, runExtractionWithFallback } from "@/lib/ai";
+import { getConfiguredProvider, getFallbackProviders, runExtractionWithFallback } from "@/lib/ai";
 import { getOcrProvider } from "@/lib/ocr";
 import { GEMINI_VISION_OCR } from "@/lib/ocr/gemini";
-import { GROQ_VISION_OCR } from "@/lib/ocr/groq";
+import { BACKUP_VISION_OCR, GROQ_VISION_OCR, OPENROUTER_VISION_OCR } from "@/lib/ocr/groq";
 import { EXTRACTION_SCHEMA_VERSION } from "@/lib/ai/extraction-schema";
 import { buildDocumentPath, DOCUMENTS_BUCKET } from "@/lib/storage/paths";
 import { mapDocument } from "@/lib/data/mappers";
@@ -235,7 +235,7 @@ export async function processDocument(session: Session, documentId: string): Pro
     if (extractionError || !extraction) throw new DocumentError("storage_failed", true);
     extractionId = extraction.id;
 
-    const outcome = await runExtractionWithFallback(provider, getFallbackProvider(config), pages);
+    const outcome = await runExtractionWithFallback(provider, getFallbackProviders(config), pages);
 
     await supabase
       .from("document_extractions")
@@ -244,7 +244,7 @@ export async function processDocument(session: Session, documentId: string): Pro
         output: { verified: outcome.verified } as never,
         // Records the backup provider when the primary was unavailable.
         ai_provider: outcome.provider,
-        ai_model: outcome.model,
+        ai_model: outcome.model.slice(0, 100),
         completed_at: new Date().toISOString(),
       })
       .eq("id", extractionId);
@@ -261,7 +261,7 @@ export async function processDocument(session: Session, documentId: string): Pro
 }
 
 /** OCR providers that are AI models transcribing an image (no engine confidence). */
-const AI_VISION_OCR = [GEMINI_VISION_OCR, GROQ_VISION_OCR];
+const AI_VISION_OCR = [GEMINI_VISION_OCR, GROQ_VISION_OCR, OPENROUTER_VISION_OCR];
 
 export interface ReviewData {
   extractionId: string;
@@ -312,7 +312,10 @@ export async function getReviewData(session: Session, documentId: string): Promi
     model: extraction.ai_model ?? "unknown",
     isSimulated: extraction.is_simulated,
     textReadByAi: AI_VISION_OCR.some((name) => extraction.ocr_provider?.includes(name)),
-    readByBackup: Boolean(extraction.ocr_provider?.includes(GROQ_VISION_OCR)) || extraction.ai_provider === "groq",
+    readByBackup:
+      BACKUP_VISION_OCR.some((engine) => extraction.ocr_provider?.includes(engine)) ||
+      extraction.ai_provider === "groq" ||
+      extraction.ai_provider === "openrouter",
   };
 }
 

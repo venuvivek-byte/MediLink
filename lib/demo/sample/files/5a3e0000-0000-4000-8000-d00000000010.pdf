@@ -1,0 +1,93 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Length 1782 >>
+stream
+0.2 0.5 0.2 rg
+0 746 595 96 re f
+1 1 1 rg
+BT /F2 20 Tf 50 794 Td (Greenleaf Family Clinic) Tj ET
+1 1 1 rg
+BT /F1 9 Tf 50 774 Td (23 Park Lane, Chennai 600020) Tj ET
+0.92 0.92 0.92 rg
+BT /F1 8 Tf 50 760 Td (Tel: +91 44 0000 0000  |  This is a synthetic sample document) Tj ET
+0.2 0.5 0.2 rg
+BT /F2 13 Tf 50 714 Td (PRESCRIPTION) Tj ET
+0.1 0.1 0.1 rg
+BT /F2 10 Tf 425 714 Td (Date: 10-Feb-2026) Tj ET
+0.8 0.8 0.8 RG
+0.6 w 50 700 m 545 700 l S
+0.1 0.1 0.1 rg
+BT /F2 10 Tf 50 680 Td (Patient:) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 142 680 Td (Meera Krishnan) Tj ET
+0.1 0.1 0.1 rg
+BT /F2 10 Tf 310 680 Td (Age / Sex:) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 370 680 Td (39 Y / F) Tj ET
+0.1 0.1 0.1 rg
+BT /F2 10 Tf 50 664 Td (Doctor:) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 142 664 Td (Dr. Sneha Pillai) Tj ET
+0.1 0.1 0.1 rg
+BT /F2 10 Tf 310 664 Td (Ref. No:) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 370 664 Td (MHV-0010) Tj ET
+0.8 0.8 0.8 RG
+0.6 w 50 650 m 545 650 l S
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 50 624 Td (Complaint: Burning upper abdominal pain for 3 weeks.) Tj ET
+0.1 0.1 0.1 rg
+BT /F1 10 Tf 50 606 Td (Referred to gastroenterology for endoscopy.) Tj ET
+0.2 0.5 0.2 rg
+BT /F2 22 Tf 50 576 Td (Rx) Tj ET
+0.1 0.1 0.1 rg
+BT /F2 11 Tf 60 550 Td (1.  Pantoprazole 40 mg) Tj ET
+0.25 0.25 0.25 rg
+BT /F1 10 Tf 78 535 Td (1 tablet  -  Once daily before breakfast  -  for 4 weeks) Tj ET
+0.1 0.1 0.1 rg
+BT /F2 10 Tf 375 150 Td (Dr. Sneha Pillai) Tj ET
+0.6 0.6 0.6 RG
+0.6 w 50 165 m 545 165 l S
+0.4 0.4 0.4 rg
+BT /F1 8 Tf 375 136 Td (Signature) Tj ET
+0.98 0.94 0.85 rg
+50 50 495 34 re f
+0.55 0.35 0.05 rg
+BT /F2 9 Tf 60 70 Td (SYNTHETIC SAMPLE - not a real patient, doctor or laboratory.) Tj ET
+0.55 0.35 0.05 rg
+BT /F1 8 Tf 60 57 Td (Generated for the MyHealthVault "Try sample" demo. Not for clinical use.) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Title (Greenleaf_Clinic_Rx_Feb2026.pdf) /Producer (MyHealthVault sample generator) >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000348 00000 n 
+0000000450 00000 n 
+0000002284 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R /Info 7 0 R >>
+startxref
+2389
+%%EOF

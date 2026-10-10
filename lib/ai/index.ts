@@ -29,6 +29,18 @@ export function getFallbackProvider(config: AppConfig): ExtractionProvider | nul
   return new OpenAIExtractionProvider(key, config.fallback.model, "groq");
 }
 
+/** Backups in the order they are tried: Groq, then OpenRouter. Unset keys are skipped. */
+export function getFallbackProviders(config: AppConfig): ExtractionProvider[] {
+  const backups: ExtractionProvider[] = [];
+  const groq = getFallbackProvider(config);
+  if (groq) backups.push(groq);
+  const openRouterKey = process.env.OPENROUTER_API_KEY;
+  if (config.secondFallback && openRouterKey) {
+    backups.push(new OpenAIExtractionProvider(openRouterKey, config.secondFallback.model, "openrouter"));
+  }
+  return backups;
+}
+
 export interface ExtractionOutcome {
   provider: string;
   model: string;
@@ -85,21 +97,28 @@ export async function runExtraction(
 
 /**
  * Runs the primary provider; only if it is UNAVAILABLE (quota, outage,
- * timeouts after its own retries) does the backup run. Invalid output and
- * configuration errors are never retried on another provider: they would
- * hide a real problem. The outcome records which provider produced it.
+ * timeouts after its own retries) or its key is rejected does the next
+ * backup run, and so on down the list. A rejected key is logged as an error
+ * so it is not silently hidden. Invalid output is never retried on another
+ * provider: a model that returns garbage must not be papered over. The
+ * outcome records which provider produced it.
  */
 export async function runExtractionWithFallback(
   primary: ExtractionProvider,
-  fallback: ExtractionProvider | null,
+  fallbacks: ExtractionProvider | ExtractionProvider[] | null,
   pages: PageText[],
   options?: Parameters<typeof runExtraction>[2]
 ): Promise<ExtractionOutcome> {
-  try {
-    return await runExtraction(primary, pages, options);
-  } catch (error) {
-    if (!fallback || !isDocumentError(error) || error.code !== "ai_unavailable") throw error;
-    console.warn(`[ai] ${primary.name} unavailable; using backup ${fallback.name}`);
-    return runExtraction(fallback, pages, options);
+  const chain = [primary, ...(Array.isArray(fallbacks) ? fallbacks : fallbacks ? [fallbacks] : [])];
+  for (let i = 0; ; i++) {
+    try {
+      return await runExtraction(chain[i], pages, options);
+    } catch (error) {
+      const next = chain[i + 1];
+      const keyRejected = isDocumentError(error) && error.code === "ai_not_configured";
+      if (!next || !isDocumentError(error) || (error.code !== "ai_unavailable" && !keyRejected)) throw error;
+      if (keyRejected) console.error(`[ai] ${chain[i].name} rejected its API key; using backup ${next.name}`);
+      else console.warn(`[ai] ${chain[i].name} unavailable; using backup ${next.name}`);
+    }
   }
 }

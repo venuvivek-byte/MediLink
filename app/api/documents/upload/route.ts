@@ -14,9 +14,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Sign in to upload documents." }, { status: 401, headers: NO_STORE });
   }
   const config = getConfig();
-  if (config.mode === "demo") {
+  if (session.kind === "demo") {
     return NextResponse.json(
-      { error: "Demo mode does not accept real files. Use the sample document instead." },
+      { error: "This read-only view does not accept real files. Use the sample document instead." },
       { status: 403, headers: NO_STORE }
     );
   }

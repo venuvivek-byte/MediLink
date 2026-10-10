@@ -1,0 +1,2 @@
+# PDFs are byte-offset sensitive: never convert their line endings.
+*.pdf binary

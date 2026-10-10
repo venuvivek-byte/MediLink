@@ -6,10 +6,41 @@ import { classifyHttpStatus, ProviderError, type ExtractionProvider, type Extrac
 
 /** Groq serves an OpenAI-compatible API; only the address and the key differ. */
 export const GROQ_BASE_URL = "https://api.groq.com/openai/v1";
+/** OpenRouter is OpenAI-compatible too (the second backup). */
+export const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
+
+export type OpenAICompatibleName = "openai" | "groq" | "openrouter";
+
+const BASE_URLS: Record<OpenAICompatibleName, string | undefined> = {
+  openai: undefined,
+  groq: GROQ_BASE_URL,
+  openrouter: OPENROUTER_BASE_URL,
+};
+
+/**
+ * Model selection for a request. OpenRouter accepts a comma-separated list
+ * ("a,b"): it tries them in order when one is rate-limited (its native model
+ * fallback). Other services get the single model unchanged.
+ */
+export function modelParams(name: OpenAICompatibleName, model: string): { model: string; models?: string[] } {
+  const list = model.split(",").map((m) => m.trim()).filter(Boolean);
+  if (name !== "openrouter" || list.length < 2) return { model: list[0] ?? model };
+  return { model: list[0], models: list };
+}
+
+/** Client for an OpenAI-compatible service. OpenRouter asks callers to identify the app. */
+export function openAICompatibleClient(name: OpenAICompatibleName, apiKey: string): OpenAI {
+  return new OpenAI({
+    apiKey,
+    baseURL: BASE_URLS[name],
+    ...(name === "openrouter" ? { defaultHeaders: { "X-Title": "MyHealthVault" } } : {}),
+  });
+}
 
 /**
  * OpenAI-compatible chat completions behind the same interface: OpenAI
- * itself, or Groq (the backup when the primary provider is unavailable).
+ * itself, Groq (the backup when the primary provider is unavailable) or
+ * OpenRouter (the second backup, when Groq is unavailable too).
  */
 export class OpenAIExtractionProvider implements ExtractionProvider {
   readonly isSimulated = false;
@@ -18,9 +49,9 @@ export class OpenAIExtractionProvider implements ExtractionProvider {
   constructor(
     apiKey: string,
     readonly model: string,
-    readonly name: "openai" | "groq" = "openai"
+    readonly name: OpenAICompatibleName = "openai"
   ) {
-    this.client = new OpenAI({ apiKey, ...(name === "groq" ? { baseURL: GROQ_BASE_URL } : {}) });
+    this.client = openAICompatibleClient(name, apiKey);
   }
 
   async extract({ pages, signal }: ExtractionRequest): Promise<unknown> {
@@ -28,7 +59,7 @@ export class OpenAIExtractionProvider implements ExtractionProvider {
     try {
       const response = await this.client.chat.completions.create(
         {
-          model: this.model,
+          ...modelParams(this.name, this.model),
           temperature: 0,
           messages: [
             { role: "system", content: SYSTEM_INSTRUCTION },

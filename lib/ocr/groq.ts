@@ -1,37 +1,45 @@
 import "server-only";
 import OpenAI from "openai";
 import { classifyHttpStatus } from "@/lib/ai/providers/types";
-import { GROQ_BASE_URL } from "@/lib/ai/providers/openai";
+import { modelParams, openAICompatibleClient, type OpenAICompatibleName } from "@/lib/ai/providers/openai";
 import { DocumentError } from "@/lib/documents/errors";
 import { TRANSCRIPTION_INSTRUCTION } from "./gemini";
 import { ocrTimeoutMs, type OcrPage, type OcrProvider, type OcrRequest } from "./index";
 
 // Backup transcription for PHOTOS and image scans, used only when the primary
-// OCR is unavailable. Same rules as the Gemini transcription step; extraction
+// OCR is unavailable (Groq first, then OpenRouter). Same rules as the Gemini transcription step; extraction
 // then runs on the text as usual.
 //
 // Measured on real handwritten prescriptions (2026-10-10): fast and mostly
 // right, but it did NOT use [illegible] where it could not read a word; it
 // guessed instead. The review screen therefore treats every entry read by
-// this provider as needing the patient's explicit check (see textReadBy).
+// a backup provider as needing the patient's explicit check (see textReadBy).
 
 /** Stored as the extraction's ocr_provider. */
 export const GROQ_VISION_OCR = "groq-vision";
+export const OPENROUTER_VISION_OCR = "openrouter-vision";
+
+/** Every backup reader: the review screen asks the patient to check each entry they produced. */
+export const BACKUP_VISION_OCR = [GROQ_VISION_OCR, OPENROUTER_VISION_OCR] as const;
 
 /** Groq rejects base64 images above about 4 MB; larger photos stay with the primary OCR. */
 const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
 
-export class GroqVisionOcrProvider implements OcrProvider {
-  readonly name = GROQ_VISION_OCR;
+const LABELS: Record<Exclude<OpenAICompatibleName, "openai">, string> = { groq: "Groq", openrouter: "OpenRouter" };
+
+/** Photo transcription through an OpenAI-compatible vision model (the backup readers). */
+export class OpenAIVisionOcrProvider implements OcrProvider {
   readonly available = true;
   private readonly client: Pick<OpenAI, "chat">;
 
   constructor(
+    private readonly service: "groq" | "openrouter",
+    readonly name: string,
     apiKey: string,
     readonly model: string,
     client?: Pick<OpenAI, "chat">
   ) {
-    this.client = client ?? new OpenAI({ apiKey, baseURL: GROQ_BASE_URL });
+    this.client = client ?? openAICompatibleClient(service, apiKey);
   }
 
   /** PDFs need page rendering this provider cannot do; very large photos exceed Groq's limit. */
@@ -46,7 +54,7 @@ export class GroqVisionOcrProvider implements OcrProvider {
     try {
       const response = await this.client.chat.completions.create(
         {
-          model: this.model,
+          ...modelParams(this.service, this.model),
           temperature: 0,
           max_completion_tokens: 8192,
           messages: [
@@ -75,7 +83,7 @@ export class GroqVisionOcrProvider implements OcrProvider {
       const status = (error as { status?: number }).status;
       const kind = classifyHttpStatus(status);
       if (kind === "auth") {
-        console.error("[ocr] Groq rejected the API key");
+        console.error(`[ocr] ${LABELS[this.service]} rejected the API key`);
         throw new DocumentError("ocr_unavailable");
       }
       if (kind === "transient") throw new DocumentError("ocr_unavailable", true);
@@ -85,6 +93,19 @@ export class GroqVisionOcrProvider implements OcrProvider {
     if (finishReason && finishReason !== "stop") throw new DocumentError("ocr_failed", true);
     const trimmed = (text ?? "").trim();
     if (!trimmed) throw new DocumentError("ocr_failed", true);
-    return [{ pageNumber: 1, text: trimmed, confidence: null, engine: GROQ_VISION_OCR }];
+    return [{ pageNumber: 1, text: trimmed, confidence: null, engine: this.name }];
+  }
+}
+
+export class GroqVisionOcrProvider extends OpenAIVisionOcrProvider {
+  constructor(apiKey: string, model: string, client?: Pick<OpenAI, "chat">) {
+    super("groq", GROQ_VISION_OCR, apiKey, model, client);
+  }
+}
+
+/** Second backup (free Google Gemma by default); tried only when Groq is unavailable too. */
+export class OpenRouterVisionOcrProvider extends OpenAIVisionOcrProvider {
+  constructor(apiKey: string, model: string, client?: Pick<OpenAI, "chat">) {
+    super("openrouter", OPENROUTER_VISION_OCR, apiKey, model, client);
   }
 }

@@ -7,7 +7,10 @@ import type { AppMode } from "@/lib/config/schema";
 export interface ShellInfo {
   displayName: string;
   bloodGroup: string | null;
+  /** "demo" for any read-only session (fictional patient or sample). */
   mode: AppMode;
+  /** True when browsing the bundled "Try sample" patient. */
+  sample: boolean;
 }
 
 const ShellContext = createContext<ShellInfo | null>(null);

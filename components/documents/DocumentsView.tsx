@@ -20,6 +20,8 @@ interface DocumentsViewProps {
   mode: AppMode;
   maxUploadBytes: number;
   demoSamples: { id: string; title: string }[];
+  /** Read-only sessions: whether originals can be opened (the bundled sample has them). */
+  canOpenFiles: boolean;
 }
 
 const PROCESSING_LABEL: Record<ProcessingStatus, string> = {
@@ -240,7 +242,7 @@ function DocumentLine({ doc }: { doc: DocumentSummary }) {
 
 // ─── Demo mode ────────────────────────────────────────────────────────────
 
-function DemoDocuments({ documents, demoSamples }: DocumentsViewProps) {
+function DemoDocuments({ documents, demoSamples, canOpenFiles }: DocumentsViewProps) {
   const [review, setReview] = useState<ReviewPayload | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -264,7 +266,7 @@ function DemoDocuments({ documents, demoSamples }: DocumentsViewProps) {
             <div>
               <h2 className="font-semibold text-base">Try the import workflow with a sample</h2>
               <p className="text-sm text-muted-foreground mt-0.5 max-w-md">
-                Demo mode does not accept real files and does not call any AI service. The samples are fictional, and their
+                This read-only view does not accept real files and does not call any AI service. The samples are fictional, and their
                 extraction output is simulated, including deliberate mistakes for you to catch during review.
               </p>
             </div>
@@ -289,7 +291,7 @@ function DemoDocuments({ documents, demoSamples }: DocumentsViewProps) {
           review={review}
           onConfirm={async () => {
             setReview(null);
-            setMessage("Demo only: the reviewed sample was not saved. In real-user mode it would now appear in your records.");
+            setMessage("Read-only: the reviewed sample was not saved. With your own account it would now appear in your records.");
             return { ok: true };
           }}
           onCancel={() => {
@@ -309,7 +311,16 @@ function DemoDocuments({ documents, demoSamples }: DocumentsViewProps) {
             {documents.map((doc) => (
               <li key={doc.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <DocumentLine doc={doc} />
-                <VerificationBadge status={doc.reviewStatus} />
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <VerificationBadge status={doc.reviewStatus} />
+                  {canOpenFiles && (
+                    <a href={`/api/documents/${doc.id}/file`} target="_blank" rel="noreferrer">
+                      <Button size="sm" variant="ghost" className="h-9 text-sm gap-1">
+                        <Eye className="w-3.5 h-3.5" aria-hidden="true" /> View original
+                      </Button>
+                    </a>
+                  )}
+                </div>
               </li>
             ))}
           </ul>

@@ -5,9 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClinicianSummary } from "@/components/share/ClinicianSummary";
 import { PublicNotice } from "@/components/share/PublicNotice";
-import { hasValidShareSession, loadSharedRecords, resolveShareToken } from "@/lib/sharing/public-access";
-import { getConfig } from "@/lib/config/env";
-import { DEMO_SHARE_PIN } from "@/lib/demo/data";
+import {
+  examplePinFor,
+  hasValidShareSession,
+  isExampleToken,
+  loadSharedRecords,
+  resolveShareToken,
+} from "@/lib/sharing/public-access";
 import { PinForm } from "./PinForm";
 
 export const metadata = { title: "Shared health summary", robots: { index: false, follow: false } };
@@ -63,8 +67,10 @@ async function ShareContent({ params }: { params: Promise<{ token: string }> }) 
               </p>
             )}
             <PinForm token={token} />
-            {getConfig().mode === "demo" && (
-              <p className="mt-3 text-xs text-center text-muted-foreground">Demo PIN: {DEMO_SHARE_PIN} (fictional patient)</p>
+            {examplePinFor(token) && (
+              <p className="mt-3 text-xs text-center text-muted-foreground">
+                Example PIN: {examplePinFor(token)} (read-only example patient)
+              </p>
             )}
           </CardContent>
         </Card>
@@ -73,6 +79,6 @@ async function ShareContent({ params }: { params: Promise<{ token: string }> }) 
   }
 
   const records = await loadSharedRecords(share);
-  return <ClinicianSummary {...records} expiresAt={share.expiresAt} isDemo={getConfig().mode === "demo"} />;
+  return <ClinicianSummary {...records} expiresAt={share.expiresAt} isDemo={isExampleToken(token)} />;
 }
 

@@ -61,6 +61,8 @@ const rawEnvSchema = z.object({
   DEMO_MODE: optionalBoolean,
   NEXT_PUBLIC_DEMO_MODE: optionalString,
   NEXT_PUBLIC_APP_URL: optionalString,
+  /** Set by Vercel: "production" | "preview" | "development". */
+  VERCEL_ENV: optionalString,
   NEXT_PUBLIC_SUPABASE_URL: optionalString,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: optionalString,
   SUPABASE_SERVICE_ROLE_KEY: optionalString,
@@ -83,6 +85,11 @@ const MAX_UPLOAD_MB = 5;
 function isSecureOrLoopbackUrl(value: string): boolean {
   const url = new URL(value);
   return url.protocol === "https:" || ["127.0.0.1", "localhost", "[::1]"].includes(url.hostname);
+}
+
+function isPublicHttpsUrl(value: string): boolean {
+  const url = new URL(value);
+  return url.protocol === "https:" && !["127.0.0.1", "localhost", "[::1]"].includes(url.hostname);
 }
 
 function isHttpUrl(value: string): boolean {
@@ -139,7 +146,12 @@ export function parseConfig(env: Record<string, string | undefined>): AppConfig 
   }
 
   const appUrl = raw.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  if (!isHttpUrl(appUrl)) problems.push("NEXT_PUBLIC_APP_URL must be an http(s) URL.");
+  if (!isHttpUrl(appUrl)) {
+    problems.push("NEXT_PUBLIC_APP_URL must be an http(s) URL.");
+  } else if (raw.VERCEL_ENV === "production" && (!raw.NEXT_PUBLIC_APP_URL || !isPublicHttpsUrl(appUrl))) {
+    // Share links and emergency QR codes are built from this: never localhost in production.
+    problems.push("NEXT_PUBLIC_APP_URL must be the public https address of the deployed app (e.g. https://myhealthvault-beryl.vercel.app).");
+  }
 
   const providerInput = (raw.AI_PROVIDER ?? "none").toLowerCase();
   if (!["gemini", "openai", "none"].includes(providerInput)) {

@@ -106,6 +106,17 @@ describe("parseConfig", () => {
     );
   });
 
+  it("on Vercel production, refuses a missing or localhost app address (share links and QR codes would be dead)", () => {
+    const vercelProd = { ...live, NODE_ENV: "production", VERCEL_ENV: "production" };
+    const message = expect.stringContaining("NEXT_PUBLIC_APP_URL");
+    expect(problemsOf(vercelProd)).toContainEqual(message);
+    expect(problemsOf({ ...vercelProd, NEXT_PUBLIC_APP_URL: "http://localhost:3000" })).toContainEqual(message);
+    expect(problemsOf({ ...vercelProd, NEXT_PUBLIC_APP_URL: "https://localhost:3000" })).toContainEqual(message);
+    expect(problemsOf({ ...vercelProd, NEXT_PUBLIC_APP_URL: "https://myhealthvault-beryl.vercel.app" })).toEqual([]);
+    // A local production build keeps working with localhost.
+    expect(problemsOf({ ...live, NODE_ENV: "production", NEXT_PUBLIC_APP_URL: "http://localhost:3000" })).toEqual([]);
+  });
+
   it("refuses a plain-http OCR service in production (documents and token would travel in clear text)", () => {
     const prod = { ...live, NODE_ENV: "production", OCR_ENABLED: "true", OCR_PROVIDER: "paddleocr", OCR_SERVICE_TOKEN: TEST_SECRET };
     expect(problemsOf({ ...prod, OCR_SERVICE_URL: "http://ocr.example.com" })).toContainEqual(expect.stringContaining("https"));

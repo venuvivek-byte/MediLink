@@ -7,7 +7,6 @@ import {
   ArrowRight,
   FileText,
   Loader2,
-  Lock,
   Pill,
   QrCode,
   Share2,
@@ -207,17 +206,13 @@ export function LandingContent({ mode, notice }: LandingContentProps) {
         </div>
       </section>
 
-      {/* ─── SECTION 4: SECURITY & CLINICAL DISCLAIMER ────────────────────── */}
-      <section className="py-16 bg-slate-900 text-white px-6 sm:px-12">
-        <div className="max-w-4xl mx-auto space-y-6 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950 border border-emerald-800 text-emerald-400 text-xs font-semibold">
-            <Lock className="w-3.5 h-3.5" aria-hidden="true" />
-            Security &amp; Clinical Integrity
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-serif font-medium">
+      {/* ─── SECTION 4: CLINICAL TRANSPARENCY & DISCLAIMER ────────────────── */}
+      <section className="py-20 bg-[#0a3528] text-white px-6 sm:px-12 border-y border-[#0e4837]">
+        <div className="max-w-4xl mx-auto space-y-5 text-center">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-medium leading-snug">
             We organize records. We never replace your doctor.
           </h2>
-          <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl mx-auto">
+          <p className="text-sm sm:text-base text-emerald-100/85 leading-relaxed max-w-2xl mx-auto font-normal">
             MediLink is strictly an organization and access tool. It does <strong>not</strong> diagnose, prescribe,
             interpret lab results, or provide automated clinical recommendations. All flagged duplicates and repeated
             tests are simple heuristic alerts for you to discuss with a licensed physician or pharmacist.

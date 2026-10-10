@@ -44,6 +44,7 @@ async function ReviewContent({ params }: { params: Promise<{ id: string }> }) {
               provider: data.provider,
               model: data.model,
               isSimulated: data.isSimulated,
+              textReadByAi: data.textReadByAi,
             }}
           />
         ) : (

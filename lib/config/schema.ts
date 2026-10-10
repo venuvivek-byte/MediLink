@@ -30,7 +30,10 @@ export interface AppConfig {
   };
   ocr: {
     enabled: boolean;
-    provider: "paddleocr" | "none";
+    /** "gemini": Gemini transcribes scans/photos (no OCR server; reuses the Gemini key). */
+    provider: "paddleocr" | "gemini" | "none";
+    /** Model used when provider is "gemini". */
+    model: string | null;
     serviceUrl: string | null;
     /** Shared secret sent to the OCR service. Never exposed to the client. */
     serviceToken: string | null;
@@ -76,6 +79,11 @@ const rawEnvSchema = z.object({
 
 const MIN_SECRET_LENGTH = 32;
 const MAX_UPLOAD_MB = 5;
+
+function isSecureOrLoopbackUrl(value: string): boolean {
+  const url = new URL(value);
+  return url.protocol === "https:" || ["127.0.0.1", "localhost", "[::1]"].includes(url.hostname);
+}
 
 function isHttpUrl(value: string): boolean {
   try {
@@ -147,15 +155,26 @@ export function parseConfig(env: Record<string, string | undefined>): AppConfig 
     provider === "gemini" ? raw.GEMINI_MODEL : provider === "openai" ? raw.OPENAI_MODEL : undefined;
 
   const ocrProviderInput = (raw.OCR_PROVIDER ?? "none").toLowerCase();
-  if (!["paddleocr", "none"].includes(ocrProviderInput)) {
-    problems.push("OCR_PROVIDER must be one of: paddleocr, none.");
+  if (!["paddleocr", "gemini", "none"].includes(ocrProviderInput)) {
+    problems.push("OCR_PROVIDER must be one of: paddleocr, gemini, none.");
   }
-  const ocrProvider = ocrProviderInput === "paddleocr" ? "paddleocr" : "none";
+  const ocrProvider = (["paddleocr", "gemini"].includes(ocrProviderInput) ? ocrProviderInput : "none") as
+    | "paddleocr"
+    | "gemini"
+    | "none";
   if (raw.OCR_SERVICE_URL && !isHttpUrl(raw.OCR_SERVICE_URL)) {
     problems.push("OCR_SERVICE_URL must be an http(s) URL.");
+  } else if (raw.OCR_SERVICE_URL && isProduction && !isSecureOrLoopbackUrl(raw.OCR_SERVICE_URL)) {
+    // Documents and the shared token travel to the OCR service: never in clear text.
+    problems.push("OCR_SERVICE_URL must use https in production (http is allowed only for localhost).");
   }
   const ocrEnabled = raw.OCR_ENABLED === "true" && ocrProvider !== "none";
-  if (ocrEnabled && mode === "live") {
+  if (ocrEnabled && mode === "live" && ocrProvider === "gemini") {
+    if (!raw.GEMINI_API_KEY || !raw.GEMINI_MODEL) {
+      problems.push("OCR_PROVIDER=gemini: set GEMINI_API_KEY and GEMINI_MODEL (or set OCR_ENABLED=false).");
+    }
+  }
+  if (ocrEnabled && mode === "live" && ocrProvider === "paddleocr") {
     if (!raw.OCR_SERVICE_URL) problems.push("OCR is enabled: set OCR_SERVICE_URL (or set OCR_ENABLED=false).");
     if (!raw.OCR_SERVICE_TOKEN || raw.OCR_SERVICE_TOKEN.length < MIN_SECRET_LENGTH) {
       problems.push(`OCR is enabled: set OCR_SERVICE_TOKEN to ${MIN_SECRET_LENGTH}+ random characters (same value as the OCR service).`);
@@ -188,6 +207,7 @@ export function parseConfig(env: Record<string, string | undefined>): AppConfig 
     ocr: {
       enabled: ocrEnabled,
       provider: ocrProvider,
+      model: ocrProvider === "gemini" ? (raw.GEMINI_MODEL ?? null) : null,
       serviceUrl: raw.OCR_SERVICE_URL ?? null,
       serviceToken: raw.OCR_SERVICE_TOKEN ?? null,
     },

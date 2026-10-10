@@ -2,6 +2,7 @@ import "server-only";
 import { z } from "zod";
 import type { AppConfig } from "@/lib/config/schema";
 import { DocumentError } from "@/lib/documents/errors";
+import { GeminiVisionOcrProvider } from "./gemini";
 
 // OCR is independent of the AI provider: it only turns page images into text
 // (with confidence and page numbers). It never interprets clinical meaning.
@@ -100,6 +101,10 @@ export class PaddleOcrProvider implements OcrProvider {
 }
 
 export function getOcrProvider(config: AppConfig): OcrProvider {
+  if (config.ocr.enabled && config.ocr.provider === "gemini" && config.ocr.model) {
+    const key = process.env.GEMINI_API_KEY;
+    if (key) return new GeminiVisionOcrProvider(key, config.ocr.model);
+  }
   if (config.ocr.enabled && config.ocr.provider === "paddleocr" && config.ocr.serviceUrl && config.ocr.serviceToken) {
     return new PaddleOcrProvider(config.ocr.serviceUrl, config.ocr.serviceToken);
   }

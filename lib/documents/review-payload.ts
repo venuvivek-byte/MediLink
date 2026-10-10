@@ -11,4 +11,6 @@ export interface ReviewPayload {
   provider: string;
   model: string;
   isSimulated: boolean;
+  /** Page text was transcribed from an image by the AI (no separate OCR engine). */
+  textReadByAi: boolean;
 }

@@ -25,23 +25,15 @@ import numpy as np
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
 from PIL import Image
 
+from ocr_engine import build_engine, model_tier
+
 MAX_BYTES = 5 * 1024 * 1024
 MAX_PAGES = 20
 MAX_SIDE_PX = 2000  # resize longest side to this before OCR
 PDF_RENDER_DPI = 200
 Image.MAX_IMAGE_PIXELS = 40_000_000  # decompression-bomb guard
 
-# "mobile" (default): PP-OCRv5 mobile models, ~4-7x faster on CPU. "server":
-# larger models; on a CPU without oneDNN they took ~25s for a phone photo and
-# 55-150s per A4 page in local benchmarks, too slow for an upload request.
-# On the synthetic test set both tiers produced the same clinical values.
-MODEL_TIERS = {
-    "mobile": {"text_detection_model_name": "PP-OCRv5_mobile_det", "text_recognition_model_name": "en_PP-OCRv5_mobile_rec"},
-    "server": {"lang": "en"},
-}
-MODEL_TIER = os.environ.get("OCR_MODEL_TIER", "mobile")
-if MODEL_TIER not in MODEL_TIERS:
-    raise SystemExit(f"OCR_MODEL_TIER must be one of: {', '.join(MODEL_TIERS)}")
+MODEL_TIER = model_tier()
 
 TOKEN = os.environ.get("OCR_SERVICE_TOKEN", "")
 if len(TOKEN) < 32:
@@ -61,19 +53,7 @@ def engine():
     global _engine
     with _engine_lock:
         if _engine is None:
-            from paddleocr import PaddleOCR
-
-            _engine = PaddleOCR(
-                **MODEL_TIERS[MODEL_TIER],
-                device="cpu",
-                # Paddle 3.x on Windows CPUs: the oneDNN backend raises
-                # "ConvertPirAttribute2RuntimeAttribute not support" for the
-                # text-detection model. Plain CPU inference works.
-                enable_mkldnn=False,
-                use_doc_orientation_classify=False,
-                use_doc_unwarping=False,
-                use_textline_orientation=False,
-            )
+            _engine = build_engine(MODEL_TIER)
         return _engine
 
 

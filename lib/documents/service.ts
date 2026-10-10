@@ -4,6 +4,7 @@ import { getConfig } from "@/lib/config/env";
 import { createClient } from "@/lib/supabase/server";
 import { getConfiguredProvider, runExtraction } from "@/lib/ai";
 import { getOcrProvider } from "@/lib/ocr";
+import { GEMINI_VISION_OCR } from "@/lib/ocr/gemini";
 import { buildDocumentPath, DOCUMENTS_BUCKET } from "@/lib/storage/paths";
 import { mapDocument } from "@/lib/data/mappers";
 import type { DocumentSummary } from "@/lib/data/types";
@@ -259,6 +260,7 @@ export interface ReviewData {
   provider: string;
   model: string;
   isSimulated: boolean;
+  textReadByAi: boolean;
 }
 
 /** The latest extraction awaiting the patient's review, with its source text. */
@@ -270,7 +272,7 @@ export async function getReviewData(session: Session, documentId: string): Promi
     supabase.from("documents").select("*").eq("id", documentId).eq("patient_id", patientId).maybeSingle(),
     supabase
       .from("document_extractions")
-      .select("id, output, ai_provider, ai_model, is_simulated")
+      .select("id, output, ai_provider, ai_model, is_simulated, ocr_provider")
       .eq("document_id", documentId)
       .eq("patient_id", patientId)
       .eq("status", "succeeded")
@@ -296,6 +298,7 @@ export async function getReviewData(session: Session, documentId: string): Promi
     provider: extraction.ai_provider ?? "unknown",
     model: extraction.ai_model ?? "unknown",
     isSimulated: extraction.is_simulated,
+    textReadByAi: extraction.ocr_provider === GEMINI_VISION_OCR,
   };
 }
 

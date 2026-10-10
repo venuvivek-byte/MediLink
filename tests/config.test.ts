@@ -105,4 +105,11 @@ describe("parseConfig", () => {
       expect.stringContaining("OCR_SERVICE_TOKEN")
     );
   });
+
+  it("refuses a plain-http OCR service in production (documents and token would travel in clear text)", () => {
+    const prod = { ...live, NODE_ENV: "production", OCR_ENABLED: "true", OCR_PROVIDER: "paddleocr", OCR_SERVICE_TOKEN: TEST_SECRET };
+    expect(problemsOf({ ...prod, OCR_SERVICE_URL: "http://ocr.example.com" })).toContainEqual(expect.stringContaining("https"));
+    expect(problemsOf({ ...prod, OCR_SERVICE_URL: "https://user-ocr.hf.space" })).toEqual([]);
+    expect(problemsOf({ ...prod, OCR_SERVICE_URL: "http://127.0.0.1:8001" })).toEqual([]);
+  });
 });

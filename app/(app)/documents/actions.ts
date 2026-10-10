@@ -62,6 +62,7 @@ export async function runDemoSampleAction(sampleId: string): Promise<{ ok: true;
       provider: outcome.provider,
       model: outcome.model,
       isSimulated: true,
+      textReadByAi: false,
     },
   };
 }

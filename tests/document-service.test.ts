@@ -57,12 +57,13 @@ vi.mock("@/lib/ai/providers/gemini", () => ({
 const ocrCalls: unknown[] = [];
 let ocrAvailable = true;
 let ocrCrash = false;
+let ocrName = "paddleocr";
 vi.mock("@/lib/ocr", async (importOriginal) => {
   const original = await importOriginal<typeof import("@/lib/ocr")>();
   return {
     ...original,
     getOcrProvider: () => ({
-      name: ocrAvailable ? "paddleocr" : "none",
+      name: ocrAvailable ? ocrName : "none",
       available: ocrAvailable,
       recognize: async (req: { pages?: number[] }) => {
         ocrCalls.push(req);
@@ -94,6 +95,7 @@ beforeEach(() => {
   aiBehaviour = "ok";
   ocrAvailable = true;
   ocrCrash = false;
+  ocrName = "paddleocr";
 });
 
 describe("uploadDocument", () => {
@@ -161,6 +163,16 @@ describe("processDocument", () => {
 
     const review = await getReviewData(session, doc.id);
     expect(review?.verified.medications[0]).toMatchObject({ flags: [], uncertain: false });
+    expect(review?.textReadByAi).toBe(false);
+  });
+
+  it("image read by Gemini (no OCR engine): recorded as such, and the review warns the patient", async () => {
+    ocrName = "gemini-vision";
+    const doc = await uploaded(PNG, "image/png");
+    const { processDocument, getReviewData } = await service();
+    expect((await processDocument(session, doc.id)).ok).toBe(true);
+    expect(fake.db.tables.document_extractions[0]).toMatchObject({ ocr_provider: "gemini-vision", text_source: "ocr" });
+    expect((await getReviewData(session, doc.id))?.textReadByAi).toBe(true);
   });
 
   it("scanned PDF page: OCRs only the pages without a text layer", async () => {

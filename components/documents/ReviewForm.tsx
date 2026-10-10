@@ -166,6 +166,13 @@ export function ReviewForm({ review, onConfirm, onCancel }: ReviewFormProps) {
               your records until you confirm. Confirmed entries are marked &quot;patient-reviewed&quot;, which is not a
               clinical verification.
             </p>
+            {review.textReadByAi && (
+              <p role="note" className="text-xs font-medium text-health-amber flex items-start gap-1.5">
+                <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+                The text of this scan or photo was read by AI. If it misread a word or number, the automatic checks
+                cannot catch it, so compare names, doses and values with the original page.
+              </p>
+            )}
             {flaggedCount > 0 && (
               <p role="status" className="text-xs font-medium text-health-amber flex items-center gap-1.5">
                 <AlertTriangle className="w-4 h-4" aria-hidden="true" /> {flaggedCount} entr

@@ -45,12 +45,12 @@ async function ShareContent({ params }: { params: Promise<{ token: string }> }) 
               <Lock className="w-6 h-6" aria-hidden="true" />
             </div>
             <CardTitle className="text-lg font-bold">Shared health summary</CardTitle>
-            <p className="text-xs text-muted-foreground">Enter the 6-digit PIN the patient gave you.</p>
+            <p className="text-sm text-muted-foreground">Enter the 6-digit PIN the patient gave you.</p>
           </CardHeader>
           <CardContent className="pt-4">
             <PinForm token={token} />
             {getConfig().mode === "demo" && (
-              <p className="mt-3 text-[11px] text-center text-muted-foreground">Demo PIN: {DEMO_SHARE_PIN} (fictional patient)</p>
+              <p className="mt-3 text-xs text-center text-muted-foreground">Demo PIN: {DEMO_SHARE_PIN} (fictional patient)</p>
             )}
           </CardContent>
         </Card>

@@ -45,11 +45,11 @@ async function EmergencyContent({ params }: { params: Promise<{ token: string }>
     <div className="min-h-screen bg-background p-4 md:p-8 flex justify-center">
       <div className="max-w-xl w-full space-y-4">
         <div className="text-center space-y-1">
-          <p className="inline-flex items-center gap-2 text-destructive text-xs font-bold uppercase tracking-wider">
+          <p className="inline-flex items-center gap-2 text-destructive text-sm font-bold uppercase tracking-wider">
             <ShieldAlert className="w-4 h-4" aria-hidden="true" /> Emergency information
           </p>
           {getConfig().mode === "demo" && <Badge variant="outline">Demo · fictional patient</Badge>}
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Shared by the patient for emergencies. Patient-provided; not clinically verified.
           </p>
         </div>

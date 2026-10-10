@@ -37,7 +37,7 @@ export default function Sidebar({ collapsed = false }: SidebarProps) {
         {!collapsed && (
           <div className="flex flex-col">
             <span className="font-bold text-[15px] leading-tight">MyHealthVault</span>
-            <span className="text-[11px] text-muted-foreground leading-tight">
+            <span className="text-xs text-muted-foreground leading-tight">
               {mode === "demo" ? "Demo mode · fictional data" : "Your health records"}
             </span>
           </div>

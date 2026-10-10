@@ -56,7 +56,7 @@ async function SettingsContent() {
     <div className="flex-1 flex flex-col">
       <Header title="Settings" subtitle="Your profile and how this app is configured" />
       <div className="p-4 md:p-8 space-y-6 max-w-4xl mx-auto w-full">
-        <p role="note" className="text-xs text-muted-foreground flex items-center gap-1.5">
+        <p role="note" className="text-sm text-muted-foreground flex items-center gap-1.5">
           <Info className="w-4 h-4" aria-hidden="true" />
           Editing your profile is not available yet.
         </p>

@@ -18,7 +18,7 @@ export function AuthCard({
             <Heart className="w-6 h-6 text-primary-foreground" aria-hidden="true" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight">MyHealthVault</h1>
-          <p className="text-xs text-muted-foreground">{tagline}</p>
+          <p className="text-sm text-muted-foreground">{tagline}</p>
         </div>
         <Card className="border-border/80 shadow-sm">
           <CardHeader className="pb-3 text-center">

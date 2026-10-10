@@ -35,17 +35,17 @@ export function DeleteRecordButton({ kind, id, label }: { kind: RecordKind; id: 
     <div className="inline-flex flex-col items-start gap-1">
       {confirming ? (
         <div role="group" aria-label={`Confirm deleting ${label}`} className="inline-flex flex-wrap items-center gap-2">
-          <span className="text-[11px] text-destructive">Delete {label} from your records?</span>
+          <span className="text-xs text-destructive">Delete {label} from your records?</span>
           <Button
             size="sm"
             variant="destructive"
-            className="h-7 text-xs"
+            className="h-9 text-sm"
             disabled={pending}
             onClick={() => run(() => deleteRecordAction({ kind, id }), () => setConfirming(false))}
           >
             {pending ? "Deleting…" : "Delete"}
           </Button>
-          <Button size="sm" variant="outline" className="h-7 text-xs" disabled={pending} onClick={() => setConfirming(false)}>
+          <Button size="sm" variant="outline" className="h-9 text-sm" disabled={pending} onClick={() => setConfirming(false)}>
             Keep
           </Button>
         </div>
@@ -53,7 +53,7 @@ export function DeleteRecordButton({ kind, id, label }: { kind: RecordKind; id: 
         <Button
           size="sm"
           variant="ghost"
-          className="h-7 text-xs text-destructive gap-1 px-2"
+          className="h-9 text-sm text-destructive gap-1 px-2"
           onClick={() => setConfirming(true)}
           aria-label={`Delete ${label}`}
         >
@@ -61,7 +61,7 @@ export function DeleteRecordButton({ kind, id, label }: { kind: RecordKind; id: 
         </Button>
       )}
       {error && (
-        <p role="alert" className="text-[11px] text-destructive">
+        <p role="alert" className="text-xs text-destructive">
           {error}
         </p>
       )}
@@ -77,14 +77,14 @@ export function NotDuplicateButton({ kind, recordIds }: { kind: "medication" | "
       <Button
         size="sm"
         variant="outline"
-        className="h-7 text-xs"
+        className="h-9 text-sm"
         disabled={pending}
         onClick={() => run(() => dismissDuplicateAction({ kind, recordIds }))}
       >
         {pending ? "Saving…" : "Not a duplicate"}
       </Button>
       {error && (
-        <p role="alert" className="text-[11px] text-destructive">
+        <p role="alert" className="text-xs text-destructive">
           {error}
         </p>
       )}

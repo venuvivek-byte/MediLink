@@ -22,7 +22,7 @@ export function VerificationBadge({ status, className }: { status: ReviewStatus;
       variant="outline"
       title={COPY[status].title}
       className={cn(
-        "gap-1 text-[11px] font-medium py-0.5",
+        "gap-1 text-xs font-medium py-0.5",
         reviewed
           ? "bg-health-emerald/10 text-health-emerald border-health-emerald/25"
           : "bg-health-amber/10 text-health-amber border-health-amber/25",

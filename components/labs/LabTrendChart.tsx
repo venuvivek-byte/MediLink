@@ -14,8 +14,8 @@ export function LabTrendChart({ series }: { series: LabSeries }) {
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 0 }} accessibilityLayer>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis dataKey="date" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
-            <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} domain={["auto", "auto"]} />
+            <XAxis dataKey="date" stroke="var(--muted-foreground)" fontSize={12} tickLine={false} />
+            <YAxis stroke="var(--muted-foreground)" fontSize={12} tickLine={false} domain={["auto", "auto"]} />
             <Tooltip
               formatter={(value) => [`${value} ${series.unit}`, series.testName]}
               contentStyle={{

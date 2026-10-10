@@ -24,7 +24,7 @@ async function SignupContent() {
   if (mode === "demo") {
     return (
       <AuthCard title="Sign-up is disabled" tagline="Demo mode uses a fictional patient">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Accounts cannot be created while the app runs in demo mode. Use the demo patient instead.
         </p>
         <Link href="/login" className={buttonVariants({ className: "w-full h-9 text-sm" })}>

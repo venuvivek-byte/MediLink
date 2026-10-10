@@ -38,7 +38,7 @@ async function LoginContent({ searchParams }: { searchParams: SearchParams }) {
       tagline="Your medical records, organised and under your control"
     >
       {notice && (
-        <p role="alert" className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs">
+        <p role="alert" className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
           {notice}
         </p>
       )}

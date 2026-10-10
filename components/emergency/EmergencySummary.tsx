@@ -24,23 +24,23 @@ export function EmergencySummary({ profile, allergies, conditions }: EmergencySu
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-4">
         <div>
-          <p className="text-xs text-muted-foreground">Patient</p>
+          <p className="text-sm text-muted-foreground">Patient</p>
           <p className="text-xl font-bold">{profile.displayName}</p>
           {profile.dateOfBirth && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Born {formatDate(profile.dateOfBirth)}
               {age ? ` (${age})` : ""}
             </p>
           )}
         </div>
         <div className="text-right">
-          <p className="text-xs text-muted-foreground">Blood group (patient-reported)</p>
+          <p className="text-sm text-muted-foreground">Blood group (patient-reported)</p>
           <p className="text-2xl font-black">{profile.bloodGroup ?? "Not recorded"}</p>
         </div>
       </div>
 
       <section aria-labelledby="em-allergies" className="p-4 rounded-xl border-2 border-destructive/40 bg-destructive/5 space-y-2">
-        <h2 id="em-allergies" className="text-xs font-bold uppercase tracking-wider text-destructive flex items-center gap-1.5">
+        <h2 id="em-allergies" className="text-sm font-bold uppercase tracking-wider text-destructive flex items-center gap-1.5">
           <AlertTriangle className="w-4 h-4" aria-hidden="true" /> Allergies
         </h2>
         {allergies.length === 0 ? (
@@ -51,7 +51,7 @@ export function EmergencySummary({ profile, allergies, conditions }: EmergencySu
               <li key={a.id} className="text-sm font-semibold">
                 {a.substance}
                 {a.reaction ? ` — ${a.reaction}` : ""}
-                <span className="ml-2 text-[11px] font-normal text-muted-foreground">
+                <span className="ml-2 text-xs font-normal text-muted-foreground">
                   ({a.reviewStatus === "patient_reviewed" ? "patient-reviewed" : "pending review"})
                 </span>
               </li>
@@ -61,7 +61,7 @@ export function EmergencySummary({ profile, allergies, conditions }: EmergencySu
       </section>
 
       <section aria-labelledby="em-conditions" className="space-y-2">
-        <h2 id="em-conditions" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <h2 id="em-conditions" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
           Documented conditions
         </h2>
         {activeConditions.length === 0 ? (
@@ -77,14 +77,14 @@ export function EmergencySummary({ profile, allergies, conditions }: EmergencySu
 
       {profile.emergencyContact && (
         <section aria-labelledby="em-contact" className="space-y-1">
-          <h2 id="em-contact" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <h2 id="em-contact" className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
             Emergency contact
           </h2>
           <p className="text-sm font-semibold">
             {profile.emergencyContact.name}
             {profile.emergencyContact.relationship ? ` (${profile.emergencyContact.relationship})` : ""}
           </p>
-          <a href={`tel:${profile.emergencyContact.phone.replace(/[^\d+]/g, "")}`} className="text-sm text-primary underline inline-flex items-center gap-1">
+          <a href={`tel:${profile.emergencyContact.phone.replace(/[^\d+]/g, "")}`} className="text-sm text-primary underline inline-flex items-center gap-1 min-h-11">
             <Phone className="w-3.5 h-3.5" aria-hidden="true" /> {profile.emergencyContact.phone}
           </a>
         </section>

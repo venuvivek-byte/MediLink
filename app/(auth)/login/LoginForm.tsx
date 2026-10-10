@@ -22,7 +22,7 @@ function DemoLogin() {
 
   return (
     <div className="space-y-4">
-      <div className="p-3 rounded-lg border border-health-amber/30 bg-health-amber/10 text-xs text-foreground/80 space-y-1">
+      <div className="p-3 rounded-lg border border-health-amber/30 bg-health-amber/10 text-sm text-foreground/80 space-y-1">
         <p className="font-semibold">Demo mode</p>
         <p>
           You will see records for Ananya Rao, a fictional patient. All data is synthetic, no
@@ -44,7 +44,7 @@ function DemoLogin() {
         {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <FlaskConical className="w-4 h-4" />}
         Continue as demo patient
       </Button>
-      <p className="text-[11px] text-muted-foreground text-center">
+      <p className="text-xs text-muted-foreground text-center">
         Real accounts are disabled while DEMO_MODE=true.
       </p>
     </div>
@@ -85,7 +85,7 @@ function PasswordLogin() {
       <OrDivider />
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="space-y-1">
-          <Label htmlFor="email" className="text-xs">Email</Label>
+          <Label htmlFor="email" className="text-sm">Email</Label>
           <Input
             id="email"
             type="email"
@@ -97,7 +97,7 @@ function PasswordLogin() {
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="password" className="text-xs">Password</Label>
+          <Label htmlFor="password" className="text-sm">Password</Label>
           <Input
             id="password"
             type="password"
@@ -118,7 +118,7 @@ function PasswordLogin() {
           )}
         </Button>
       </form>
-      <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
+      <div className="flex items-center justify-between text-sm text-muted-foreground pt-1">
         <span>Don&apos;t have an account?</span>
         <Link href="/signup" className="text-primary font-medium hover:underline">
           Create an account
@@ -132,7 +132,7 @@ function FormError({ message }: { message: string }) {
   return (
     <div
       role="alert"
-      className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center gap-2"
+      className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center gap-2"
     >
       <AlertCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
       <span>{message}</span>

@@ -13,12 +13,12 @@ export interface SourceInfo {
  */
 export function SourceLink({ source, canOpen }: { source: SourceInfo; canOpen: boolean }) {
   if (!source.documentId || !source.documentName) {
-    return <span className="text-[11px] text-muted-foreground">No source document linked</span>;
+    return <span className="text-xs text-muted-foreground">No source document linked</span>;
   }
   const label = `${source.documentName}${source.page ? `, page ${source.page}` : ""}`;
   if (!canOpen) {
     return (
-      <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
+      <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
         <FileText className="w-3 h-3" aria-hidden="true" /> From {label}
       </span>
     );
@@ -29,7 +29,7 @@ export function SourceLink({ source, canOpen }: { source: SourceInfo; canOpen: b
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="text-[11px] text-primary underline-offset-2 hover:underline inline-flex items-center gap-1"
+      className="text-xs text-primary underline-offset-2 hover:underline inline-flex items-center gap-1"
     >
       <FileText className="w-3 h-3" aria-hidden="true" /> From {label}
       <span className="sr-only"> (opens the original document in a new tab)</span>

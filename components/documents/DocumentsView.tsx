@@ -104,7 +104,7 @@ function LiveDocuments({ documents, maxUploadBytes }: DocumentsViewProps) {
           </div>
           <div>
             <h2 className="font-semibold text-base">Add a medical document</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">PDF, JPEG or PNG, up to {maxMb} MB. Stored privately; only you can access it.</p>
+            <p className="text-sm text-muted-foreground mt-0.5">PDF, JPEG or PNG, up to {maxMb} MB. Stored privately; only you can access it.</p>
           </div>
           <input
             ref={inputRef}
@@ -122,7 +122,7 @@ function LiveDocuments({ documents, maxUploadBytes }: DocumentsViewProps) {
             {busy ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Upload className="w-4 h-4" aria-hidden="true" />}
             {stage.kind === "uploading" ? "Uploading…" : stage.kind === "processing" ? "Reading the document…" : "Choose a file"}
           </Button>
-          <div aria-live="polite" className="min-h-5 text-xs">
+          <div aria-live="polite" className="min-h-5 text-sm">
             {stage.kind === "processing" && (
               <span className="text-muted-foreground">Extracting text and details. This can take up to a minute for scanned documents.</span>
             )}
@@ -130,7 +130,7 @@ function LiveDocuments({ documents, maxUploadBytes }: DocumentsViewProps) {
               <span role="alert" className="text-destructive flex items-center gap-1.5">
                 <AlertCircle className="w-4 h-4" aria-hidden="true" /> {stage.message}
                 {stage.documentId && stage.retryable && (
-                  <Button size="sm" variant="outline" className="h-7 text-xs ml-2" onClick={() => void process(stage.documentId!)}>
+                  <Button size="sm" variant="outline" className="h-9 text-sm ml-2" onClick={() => void process(stage.documentId!)}>
                     Try again
                   </Button>
                 )}
@@ -143,7 +143,7 @@ function LiveDocuments({ documents, maxUploadBytes }: DocumentsViewProps) {
       <Card className="border-border/80">
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle className="text-base font-semibold">Your documents</CardTitle>
-          <span className="text-xs text-muted-foreground">{documents.length} files</span>
+          <span className="text-sm text-muted-foreground">{documents.length} files</span>
         </CardHeader>
         <CardContent className="p-0">
           {documents.length === 0 ? (
@@ -169,24 +169,24 @@ function LiveDocuments({ documents, maxUploadBytes }: DocumentsViewProps) {
                         {(awaitingReview || doc.reviewStatus === "patient_reviewed") && <VerificationBadge status={doc.reviewStatus} />}
                       </div>
                     </div>
-                    {doc.processingError && !doc.cancelled && <p className="text-xs text-destructive">{doc.processingError}</p>}
+                    {doc.processingError && !doc.cancelled && <p className="text-sm text-destructive">{doc.processingError}</p>}
                     <div className="flex flex-wrap gap-2">
                       {awaitingReview && (
-                        <Link href={`/documents/${doc.id}/review`} className={buttonVariants({ size: "sm", className: "h-8 text-xs gap-1" })}>
+                        <Link href={`/documents/${doc.id}/review`} className={buttonVariants({ size: "sm", className: "h-9 text-sm gap-1" })}>
                           <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /> Review extracted details
                         </Link>
                       )}
                       {canProcess && (
-                        <Button size="sm" variant="outline" className="h-8 text-xs gap-1" disabled={busy} onClick={() => void process(doc.id)}>
+                        <Button size="sm" variant="outline" className="h-9 text-sm gap-1" disabled={busy} onClick={() => void process(doc.id)}>
                           <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" /> {doc.processingStatus === "failed" ? "Retry" : "Process"}
                         </Button>
                       )}
                       <a href={`/api/documents/${doc.id}/file`} target="_blank" rel="noreferrer">
-                        <Button size="sm" variant="ghost" className="h-8 text-xs gap-1">
+                        <Button size="sm" variant="ghost" className="h-9 text-sm gap-1">
                           <Eye className="w-3.5 h-3.5" aria-hidden="true" /> View original
                         </Button>
                       </a>
-                      <Button size="sm" variant="ghost" className="h-8 text-xs gap-1 text-destructive" disabled={busyId === doc.id} onClick={() => remove(doc)}>
+                      <Button size="sm" variant="ghost" className="h-9 text-sm gap-1 text-destructive" disabled={busyId === doc.id} onClick={() => remove(doc)}>
                         <Trash2 className="w-3.5 h-3.5" aria-hidden="true" /> Delete
                       </Button>
                     </div>
@@ -208,8 +208,8 @@ function DocumentLine({ doc }: { doc: DocumentSummary }) {
         <FileText className="w-5 h-5" aria-hidden="true" />
       </div>
       <div className="min-w-0">
-        <h3 className="text-sm font-semibold truncate">{doc.filename}</h3>
-        <p className="text-xs text-muted-foreground">
+        <h3 className="text-sm font-semibold line-clamp-2 break-all" title={doc.filename}>{doc.filename}</h3>
+        <p className="text-sm text-muted-foreground">
           {[
             doc.documentType ? humanize(doc.documentType) : "Type unknown",
             `Document date: ${formatDate(doc.documentDate)}`,
@@ -250,20 +250,20 @@ function DemoDocuments({ documents, demoSamples }: DocumentsViewProps) {
             </div>
             <div>
               <h2 className="font-semibold text-base">Try the import workflow with a sample</h2>
-              <p className="text-xs text-muted-foreground mt-0.5 max-w-md">
+              <p className="text-sm text-muted-foreground mt-0.5 max-w-md">
                 Demo mode does not accept real files and does not call any AI service. The samples are fictional, and their
                 extraction output is simulated, including deliberate mistakes for you to catch during review.
               </p>
             </div>
             <div className="flex flex-wrap justify-center gap-2">
               {demoSamples.map((s) => (
-                <Button key={s.id} variant="outline" disabled={pending} onClick={() => load(s.id)} className="text-xs">
+                <Button key={s.id} variant="outline" disabled={pending} onClick={() => load(s.id)} className="text-sm h-auto min-h-9 py-2 max-w-full whitespace-normal text-center">
                   {s.title}
                 </Button>
               ))}
             </div>
             {message && (
-              <p role="status" className="text-xs text-muted-foreground">
+              <p role="status" className="text-sm text-muted-foreground">
                 {message}
               </p>
             )}
@@ -289,7 +289,7 @@ function DemoDocuments({ documents, demoSamples }: DocumentsViewProps) {
       <Card className="border-border/80">
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle className="text-base font-semibold">Your documents</CardTitle>
-          <span className="text-xs text-muted-foreground">{documents.length} files</span>
+          <span className="text-sm text-muted-foreground">{documents.length} files</span>
         </CardHeader>
         <CardContent className="p-0">
           <ul className="divide-y divide-border">

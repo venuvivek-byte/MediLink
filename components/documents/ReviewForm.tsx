@@ -163,26 +163,26 @@ export function ReviewForm({ review, onConfirm, onCancel }: ReviewFormProps) {
                 </Badge>
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Automatic extraction can be wrong. Check every entry against the document on the right. Nothing is added to
               your records until you confirm. Confirmed entries are marked &quot;patient-reviewed&quot;, which is not a
               clinical verification.
             </p>
             {review.textReadByAi && (
-              <p role="note" className="text-xs font-medium text-health-amber flex items-start gap-1.5">
+              <p role="note" className="text-sm font-medium text-health-amber flex items-start gap-1.5">
                 <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
                 The text of this scan or photo was read by AI. If it misread a word or number, the automatic checks
                 cannot catch it, so compare names, doses and values with the original page.
               </p>
             )}
             {flaggedCount > 0 && (
-              <p role="status" className="text-xs font-medium text-health-amber flex items-center gap-1.5">
+              <p role="status" className="text-sm font-medium text-health-amber flex items-center gap-1.5">
                 <AlertTriangle className="w-4 h-4" aria-hidden="true" /> {flaggedCount} entr
                 {flaggedCount === 1 ? "y needs" : "ies need"} extra attention.
               </p>
             )}
             {v.unreadable_notes.length > 0 && (
-              <ul className="text-xs text-muted-foreground list-disc pl-5">
+              <ul className="text-sm text-muted-foreground list-disc pl-5">
                 {v.unreadable_notes.map((n, i) => (
                   <li key={i}>Unreadable: {n}</li>
                 ))}
@@ -197,7 +197,7 @@ export function ReviewForm({ review, onConfirm, onCancel }: ReviewFormProps) {
           </CardHeader>
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label htmlFor="h-type" className="text-xs">Document type</Label>
+              <Label htmlFor="h-type" className="text-sm">Document type</Label>
               <select
                 id="h-type"
                 value={header.document_type}
@@ -259,7 +259,7 @@ export function ReviewForm({ review, onConfirm, onCancel }: ReviewFormProps) {
                     aria-selected={p.pageNumber === activePage}
                     size="sm"
                     variant={p.pageNumber === activePage ? "default" : "outline"}
-                    className="h-7 text-xs"
+                    className="h-9 text-sm"
                     onClick={() => setActivePage(p.pageNumber)}
                   >
                     Page {p.pageNumber}
@@ -269,8 +269,8 @@ export function ReviewForm({ review, onConfirm, onCancel }: ReviewFormProps) {
             )}
           </CardHeader>
           <CardContent>
-            <p className="text-[11px] text-muted-foreground mb-2">Text read from the document (page {activePage}).</p>
-            <pre className="whitespace-pre-wrap text-xs font-mono bg-muted/40 rounded-lg p-3 max-h-[60vh] overflow-auto">
+            <p className="text-xs text-muted-foreground mb-2">Text read from the document (page {activePage}).</p>
+            <pre className="whitespace-pre-wrap text-sm font-mono bg-muted/40 rounded-lg p-3 max-h-[60vh] overflow-auto">
               {page?.text || "No text on this page."}
             </pre>
           </CardContent>
@@ -298,9 +298,9 @@ function TextField({
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between gap-2">
-        <Label htmlFor={id} className="text-xs">{label}</Label>
+        <Label htmlFor={id} className="text-sm">{label}</Label>
         {value !== "" && (
-          <button type="button" onClick={() => onChange("")} className="text-[11px] text-muted-foreground hover:text-foreground underline" aria-label={`Mark ${label} as unknown`}>
+          <button type="button" onClick={() => onChange("")} className="text-xs text-muted-foreground hover:text-foreground underline" aria-label={`Mark ${label} as unknown`}>
             Mark unknown
           </button>
         )}
@@ -315,7 +315,7 @@ function TextField({
         aria-describedby={warning ? `${id}-warn` : undefined}
       />
       {warning && (
-        <p id={`${id}-warn`} className="text-[11px] text-health-amber flex items-center gap-1">
+        <p id={`${id}-warn`} className="text-xs text-health-amber flex items-center gap-1">
           <HelpCircle className="w-3 h-3" aria-hidden="true" /> {warning}
         </p>
       )}
@@ -354,7 +354,7 @@ function ItemSection({
           <fieldset key={item.uid} className={`rounded-xl border p-3 space-y-3 ${item.flags.length ? "border-health-amber/60 bg-health-amber/5" : "border-border"}`}>
             <legend className="sr-only">{`${title} ${index + 1}`}</legend>
             {item.flags.length > 0 && (
-              <ul className="text-xs text-health-amber space-y-0.5">
+              <ul className="text-sm text-health-amber space-y-0.5">
                 {item.flags.map((f) => (
                   <li key={f} className="flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3" aria-hidden="true" /> {FLAG_TEXT[f]}
@@ -375,7 +375,7 @@ function ItemSection({
               ))}
               {withStatus && (
                 <div className="space-y-1">
-                  <Label htmlFor={`${item.uid}-status`} className="text-xs">Are you currently taking it?</Label>
+                  <Label htmlFor={`${item.uid}-status`} className="text-sm">Are you currently taking it?</Label>
                   <select
                     id={`${item.uid}-status`}
                     value={item.status}
@@ -390,11 +390,11 @@ function ItemSection({
                 </div>
               )}
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
               <button type="button" className="text-primary underline" onClick={() => onShowPage(item.page)}>
                 Source: page {item.page} — “{item.quote.length > 60 ? `${item.quote.slice(0, 60)}…` : item.quote}”
               </button>
-              <Button type="button" size="sm" variant="ghost" className="h-7 text-xs text-destructive gap-1" onClick={() => setItems((list) => list.filter((i) => i.uid !== item.uid))}>
+              <Button type="button" size="sm" variant="ghost" className="h-9 text-sm text-destructive gap-1" onClick={() => setItems((list) => list.filter((i) => i.uid !== item.uid))}>
                 <Trash2 className="w-3.5 h-3.5" aria-hidden="true" /> Remove
               </Button>
             </div>

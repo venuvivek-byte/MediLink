@@ -57,7 +57,7 @@ export function PinForm({ token }: { token: string }) {
         />
       </div>
       {error && (
-        <p id="pin-error" role="alert" className="text-xs text-destructive text-center font-medium">
+        <p id="pin-error" role="alert" className="text-sm text-destructive text-center font-medium">
           {error}
         </p>
       )}

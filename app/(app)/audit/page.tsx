@@ -40,7 +40,7 @@ async function AuditContent() {
               <ClipboardList className="w-4 h-4 text-primary" aria-hidden="true" />
               Events
             </CardTitle>
-            <span className="text-xs text-muted-foreground">{events.length} events</span>
+            <span className="text-sm text-muted-foreground">{events.length} events</span>
           </CardHeader>
           <CardContent className="p-0">
             {events.length === 0 ? (
@@ -58,13 +58,13 @@ async function AuditContent() {
                         <div className="min-w-0">
                           <p className="font-semibold">{humanize(event.eventType)}</p>
                           {event.details.length > 0 && (
-                            <p className="text-xs text-muted-foreground truncate">
+                            <p className="text-sm text-muted-foreground line-clamp-2 break-words">
                               {event.details.map((d) => `${d.label}: ${d.value}`).join(" · ")}
                             </p>
                           )}
                         </div>
                       </div>
-                      <time dateTime={event.occurredAt ?? undefined} className="text-xs text-muted-foreground shrink-0">
+                      <time dateTime={event.occurredAt ?? undefined} className="text-sm text-muted-foreground shrink-0">
                         {formatDateTime(event.occurredAt)}
                       </time>
                     </li>

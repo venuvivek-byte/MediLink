@@ -42,7 +42,7 @@ async function LabResultsContent() {
     <div className="flex-1 flex flex-col">
       <Header title="Lab results" subtitle="Results as printed on your reports, compared over time" />
       <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto w-full">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Reference ranges and high/low flags are copied from the original report. MyHealthVault does not interpret
           results or decide what is normal; discuss them with your doctor.
         </p>
@@ -51,7 +51,7 @@ async function LabResultsContent() {
           <section
             key={d.key}
             aria-label={`Possible duplicate entry: ${d.testName}`}
-            className="p-4 rounded-xl border border-health-amber/40 bg-health-amber/10 space-y-2 text-xs"
+            className="p-4 rounded-xl border border-health-amber/40 bg-health-amber/10 space-y-2 text-sm"
           >
             <div className="flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 text-health-amber shrink-0" aria-hidden="true" />
@@ -68,7 +68,7 @@ async function LabResultsContent() {
               ))}
             </ul>
             {live && (
-              <div className="pl-8 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+              <div className="pl-8 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <NotDuplicateButton kind="lab_result" recordIds={d.records.map((r) => r.id)} />
                 <span>or delete the extra entry in the table below.</span>
               </div>
@@ -77,7 +77,7 @@ async function LabResultsContent() {
         ))}
 
         {repeats.map((r) => (
-          <div key={`${r.key}-${r.later.id}`} role="note" className="p-3 rounded-xl border border-border bg-muted/30 flex items-start gap-3 text-xs">
+          <div key={`${r.key}-${r.later.id}`} role="note" className="p-3 rounded-xl border border-border bg-muted/30 flex items-start gap-3 text-sm">
             <Repeat className="w-4 h-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
             <span>
               <strong>{r.testName}</strong> was recorded {r.daysApart} days apart ({formatDate(r.earlier.testDate)} and{" "}
@@ -92,7 +92,7 @@ async function LabResultsContent() {
               <CardTitle className="text-base font-semibold">
                 {s.testName} over time <span className="text-muted-foreground font-normal">({s.unit})</span>
               </CardTitle>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 {s.points.length} results in the same unit.
                 {s.referenceRange ? ` Reference range on the latest report: ${s.referenceRange}.` : ""}
               </p>
@@ -109,16 +109,51 @@ async function LabResultsContent() {
               <FlaskConical className="w-4 h-4 text-primary" aria-hidden="true" />
               All results
             </CardTitle>
-            <span className="text-xs text-muted-foreground">{labs.length} results</span>
+            <span className="text-sm text-muted-foreground">{labs.length} results</span>
           </CardHeader>
           <CardContent className="p-0">
             {labs.length === 0 ? (
               <p className="p-6 text-sm text-muted-foreground text-center">No lab results recorded yet.</p>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+              {/* Seven columns cannot fit a phone; below md each result is a stacked row. */}
+              <ul className="md:hidden divide-y divide-border border-t border-border" aria-label="All lab results, newest first">
+                {labs.map((lab) => (
+                  <li key={lab.id} className="px-4 py-3 space-y-1.5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold">{lab.testName}</p>
+                        <p className="text-sm text-muted-foreground">{formatDate(lab.testDate)}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-sm font-medium whitespace-nowrap">
+                          {lab.value ?? "—"} {lab.unit ?? ""}
+                        </p>
+                        {lab.reportFlag && (
+                          <Badge variant="outline" className="border-health-amber/50 text-health-amber text-xs">
+                            {lab.reportFlag}
+                            <span className="sr-only"> (as printed on the report)</span>
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Reference range: {lab.referenceRange ?? "Not on report"}
+                    </p>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <SourceLink source={sourceOf(lab, documentNames)} canOpen={live} />
+                      <div className="flex items-center gap-2">
+                        <VerificationBadge status={lab.reviewStatus} />
+                        {live && <DeleteRecordButton kind="lab_result" id={lab.id} label={`${lab.testName} result`} />}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm text-left">
                   <caption className="sr-only">All lab results, newest first</caption>
-                  <thead className="bg-muted/50 border-y border-border text-muted-foreground text-xs">
+                  <thead className="bg-muted/50 border-y border-border text-muted-foreground text-sm">
                     <tr>
                       <th scope="col" className="px-4 py-3 font-medium">Test</th>
                       <th scope="col" className="px-4 py-3 font-medium">Date</th>
@@ -139,12 +174,12 @@ async function LabResultsContent() {
                         </td>
                         <td className="px-4 py-3">
                           {lab.reportFlag ? (
-                            <Badge variant="outline" className="border-health-amber/50 text-health-amber text-[10px]">
+                            <Badge variant="outline" className="border-health-amber/50 text-health-amber text-xs">
                               {lab.reportFlag}
                               <span className="sr-only"> (as printed on the report)</span>
                             </Badge>
                           ) : (
-                            <span className="text-xs text-muted-foreground">None printed</span>
+                            <span className="text-sm text-muted-foreground">None printed</span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">{lab.referenceRange ?? "Not on report"}</td>
@@ -162,6 +197,7 @@ async function LabResultsContent() {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
           </CardContent>
         </Card>

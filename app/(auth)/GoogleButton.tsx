@@ -31,7 +31,7 @@ export function GoogleButton({ label = "Continue with Google" }: { label?: strin
         {label}
       </Button>
       {error && (
-        <p role="alert" className="text-xs text-destructive text-center">
+        <p role="alert" className="text-sm text-destructive text-center">
           {error}
         </p>
       )}
@@ -46,7 +46,7 @@ export function OrDivider() {
         <div className="w-full border-t border-border" />
       </div>
       <div className="relative flex justify-center">
-        <span className="bg-card px-2 text-[11px] text-muted-foreground">or</span>
+        <span className="bg-card px-2 text-xs text-muted-foreground">or</span>
       </div>
     </div>
   );

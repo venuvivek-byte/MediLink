@@ -29,14 +29,14 @@ export function ClinicianSummary(props: ClinicianSummaryProps) {
               <h1 className="font-bold text-lg">{patientName}</h1>
               {isDemo && <Badge variant="outline">Demo · fictional patient</Badge>}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Read-only summary shared by the patient · access expires {formatDateTime(expiresAt)}
             </p>
           </div>
           <PrintButton label="Print" />
         </header>
 
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Records were extracted from the patient&apos;s documents. &quot;Patient-reviewed&quot; means the patient
           confirmed the entry against the source; it has not been clinically verified.
         </p>
@@ -89,7 +89,7 @@ export function ClinicianSummary(props: ClinicianSummaryProps) {
                     <span className="text-muted-foreground">
                       {[m.dosage, m.frequency].filter(Boolean).join(", ")} · from {formatDate(m.startDate)}
                     </span>
-                    <Badge variant="outline" className="text-[10px]">{m.status}</Badge>
+                    <Badge variant="outline" className="text-xs">{m.status}</Badge>
                     <VerificationBadge status={m.reviewStatus} />
                   </li>
                 ))}
@@ -105,7 +105,7 @@ export function ClinicianSummary(props: ClinicianSummaryProps) {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
-                  <thead className="text-xs text-muted-foreground border-b border-border">
+                  <thead className="text-sm text-muted-foreground border-b border-border">
                     <tr>
                       <th scope="col" className="py-2 pr-4 font-medium">Test</th>
                       <th scope="col" className="py-2 pr-4 font-medium">Date</th>

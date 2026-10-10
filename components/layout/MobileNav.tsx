@@ -32,7 +32,7 @@ export default function MobileNav() {
                 <span className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-md">
                   <item.icon className="w-6 h-6 text-primary-foreground" strokeWidth={2.5} aria-hidden="true" />
                 </span>
-                <span className="text-[10px] font-medium mt-1 text-primary">{item.name}</span>
+                <span className="text-xs font-medium mt-1 text-primary">{item.name}</span>
               </Link>
             );
           }
@@ -47,7 +47,7 @@ export default function MobileNav() {
               )}
             >
               <item.icon className="w-5 h-5" aria-hidden="true" />
-              <span className={cn("text-[10px] mt-0.5", active ? "font-semibold" : "font-medium")}>{item.name}</span>
+              <span className={cn("text-xs mt-0.5", active ? "font-semibold" : "font-medium")}>{item.name}</span>
             </Link>
           );
         })}
@@ -55,7 +55,7 @@ export default function MobileNav() {
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger className="flex flex-col items-center py-2 px-3 rounded-xl text-muted-foreground">
             <Menu className="w-5 h-5" aria-hidden="true" />
-            <span className="text-[10px] mt-0.5 font-medium">More</span>
+            <span className="text-xs mt-0.5 font-medium">More</span>
           </SheetTrigger>
           <SheetContent side="bottom" className="pb-6">
             <SheetHeader>

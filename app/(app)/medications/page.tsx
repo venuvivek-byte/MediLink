@@ -63,13 +63,13 @@ async function MedicationsContent() {
               <AlertTriangle className="w-5 h-5 text-health-amber shrink-0 mt-0.5" aria-hidden="true" />
               <div className="space-y-0.5">
                 <h2 className="text-sm font-semibold">Possible duplicate: {alert.displayName}</h2>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   {alert.reason} This may be intentional (for example, a dose change). Check with your doctor or
                   pharmacist before changing anything.
                 </p>
               </div>
             </div>
-            <ul className="space-y-1 pl-8 text-xs">
+            <ul className="space-y-1 pl-8 text-sm">
               {alert.records.map((r) => (
                 <li key={r.id} className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <span className="font-medium">
@@ -82,7 +82,7 @@ async function MedicationsContent() {
               ))}
             </ul>
             {live && (
-              <div className="pl-8 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+              <div className="pl-8 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <NotDuplicateButton kind="medication" recordIds={alert.records.map((r) => r.id)} />
                 <span>or delete the extra entry from its card below.</span>
               </div>
@@ -107,11 +107,11 @@ async function MedicationsContent() {
                 <h2 id={`meds-${status}`} className="text-base font-bold flex items-center gap-2">
                   <Pill className="w-4 h-4 text-primary" aria-hidden="true" />
                   {title}
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                  <span className="text-sm font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
                     {items.length}
                   </span>
                 </h2>
-                <p className="text-xs text-muted-foreground">{description}</p>
+                <p className="text-sm text-muted-foreground">{description}</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {items.map((med) => (
@@ -129,7 +129,7 @@ async function MedicationsContent() {
         })}
 
         <Card className="bg-muted/30 border-dashed">
-          <CardContent className="p-4 text-xs text-muted-foreground flex items-start gap-2">
+          <CardContent className="p-4 text-sm text-muted-foreground flex items-start gap-2">
             <Info className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
             <span>
               <strong>Drug-interaction checking is not available.</strong> MyHealthVault does not check medicines
@@ -160,39 +160,39 @@ function MedicationCard({
           <div className="flex flex-wrap items-center gap-2">
             <CardTitle className="text-base font-semibold">{med.name}</CardTitle>
             {flagged && (
-              <Badge variant="outline" className="bg-health-amber/10 text-health-amber border-health-amber/30 text-[10px]">
+              <Badge variant="outline" className="bg-health-amber/10 text-health-amber border-health-amber/30 text-xs">
                 Possible duplicate
               </Badge>
             )}
           </div>
           {(med.ingredient || med.strength) && (
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-sm text-muted-foreground mt-0.5">
               {[med.ingredient, med.strength].filter(Boolean).join(" · ")}
             </p>
           )}
         </div>
         <VerificationBadge status={med.reviewStatus} />
       </CardHeader>
-      <CardContent className="space-y-3 text-xs">
+      <CardContent className="space-y-3 text-sm">
         <dl className="grid grid-cols-2 gap-2 p-2.5 rounded-lg bg-muted/40">
           <div>
-            <dt className="text-muted-foreground text-[10px]">Dosage &amp; route</dt>
+            <dt className="text-muted-foreground text-xs">Dosage &amp; route</dt>
             <dd className="font-medium">{[med.dosage, med.route].filter(Boolean).join(", ") || "Not stated"}</dd>
           </div>
           <div>
-            <dt className="text-muted-foreground text-[10px]">Frequency</dt>
+            <dt className="text-muted-foreground text-xs">Frequency</dt>
             <dd className="font-medium">{med.frequency ?? "Not stated"}</dd>
           </div>
           <div>
-            <dt className="text-muted-foreground text-[10px]">Started</dt>
+            <dt className="text-muted-foreground text-xs">Started</dt>
             <dd className="font-medium">{formatDate(med.startDate)}</dd>
           </div>
           <div>
-            <dt className="text-muted-foreground text-[10px]">Stopped</dt>
+            <dt className="text-muted-foreground text-xs">Stopped</dt>
             <dd className="font-medium">{med.endDate ? formatDate(med.endDate) : "Not stated"}</dd>
           </div>
         </dl>
-        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <Building2 className="w-3.5 h-3.5" aria-hidden="true" />
             {med.facilityName ?? "Facility not stated"}

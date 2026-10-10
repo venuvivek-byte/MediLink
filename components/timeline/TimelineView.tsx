@@ -74,7 +74,7 @@ export function TimelineView({
     );
   }
 
-  const selectClass = "w-full h-9 rounded-md border bg-background px-2 text-xs text-foreground";
+  const selectClass = "w-full h-9 rounded-md border bg-background px-2 text-sm text-foreground";
 
   return (
     <>
@@ -98,7 +98,7 @@ export function TimelineView({
                 size="sm"
                 aria-pressed={filters.type === type}
                 onClick={() => set({ type })}
-                className="text-xs h-8"
+                className="text-sm h-9"
               >
                 {type === "all" ? "All events" : humanize(type)}
               </Button>
@@ -106,15 +106,15 @@ export function TimelineView({
           </div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          <label htmlFor={`${id}-from`} className="text-[11px] text-muted-foreground space-y-1">
+          <label htmlFor={`${id}-from`} className="text-xs text-muted-foreground space-y-1">
             <span>From</span>
             <input id={`${id}-from`} type="date" value={filters.from} onChange={(e) => set({ from: e.target.value })} className={selectClass} />
           </label>
-          <label htmlFor={`${id}-to`} className="text-[11px] text-muted-foreground space-y-1">
+          <label htmlFor={`${id}-to`} className="text-xs text-muted-foreground space-y-1">
             <span>To</span>
             <input id={`${id}-to`} type="date" value={filters.to} onChange={(e) => set({ to: e.target.value })} className={selectClass} />
           </label>
-          <label htmlFor={`${id}-facility`} className="text-[11px] text-muted-foreground space-y-1">
+          <label htmlFor={`${id}-facility`} className="text-xs text-muted-foreground space-y-1">
             <span>Clinic or lab</span>
             <select id={`${id}-facility`} value={filters.facility} onChange={(e) => set({ facility: e.target.value })} className={selectClass}>
               <option value="">All</option>
@@ -125,7 +125,7 @@ export function TimelineView({
               ))}
             </select>
           </label>
-          <label htmlFor={`${id}-provider`} className="text-[11px] text-muted-foreground space-y-1">
+          <label htmlFor={`${id}-provider`} className="text-xs text-muted-foreground space-y-1">
             <span>Doctor</span>
             <select id={`${id}-provider`} value={filters.provider} onChange={(e) => set({ provider: e.target.value })} className={selectClass}>
               <option value="">All</option>
@@ -139,13 +139,13 @@ export function TimelineView({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
         <p aria-live="polite">
           Showing {filtered.length} of {events.length} events
           {undatedHidden ? " (events without a date are hidden while a date range is set)" : ""}
         </p>
         {active && (
-          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setFilters(NO_FILTERS)}>
+          <Button size="sm" variant="ghost" className="h-9 text-sm" onClick={() => setFilters(NO_FILTERS)}>
             Clear filters
           </Button>
         )}
@@ -165,7 +165,7 @@ export function TimelineView({
                     <h2 className="font-semibold text-sm md:text-base">{evt.title}</h2>
                     <VerificationBadge status={evt.reviewStatus} />
                   </div>
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
                       {formatDate(evt.eventDate)}

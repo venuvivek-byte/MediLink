@@ -47,13 +47,13 @@ export function SignupForm() {
 
   if (success) {
     return (
-      <div role="status" className="p-4 rounded-xl bg-health-emerald/10 border border-health-emerald/30 space-y-2 text-center text-xs">
+      <div role="status" className="p-4 rounded-xl bg-health-emerald/10 border border-health-emerald/30 space-y-2 text-center text-sm">
         <CheckCircle2 className="w-8 h-8 mx-auto text-health-emerald" aria-hidden="true" />
         <h2 className="font-semibold text-sm">Check your email</h2>
         <p className="text-muted-foreground">
           If email confirmation is enabled, confirm your address before signing in.
         </p>
-        <Link href="/login" className={buttonVariants({ size: "sm", className: "w-full text-xs mt-2" })}>
+        <Link href="/login" className={buttonVariants({ size: "sm", className: "w-full text-sm mt-2" })}>
           Go to sign in
         </Link>
       </div>
@@ -63,7 +63,7 @@ export function SignupForm() {
   return (
     <>
       {error && (
-        <div role="alert" className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs flex items-center gap-2">
+        <div role="alert" className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
           <span>{error}</span>
         </div>
@@ -72,7 +72,7 @@ export function SignupForm() {
       <OrDivider />
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="space-y-1">
-          <Label htmlFor="fullName" className="text-xs">Full name</Label>
+          <Label htmlFor="fullName" className="text-sm">Full name</Label>
           <Input
             id="fullName"
             autoComplete="name"
@@ -84,7 +84,7 @@ export function SignupForm() {
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="email" className="text-xs">Email</Label>
+          <Label htmlFor="email" className="text-sm">Email</Label>
           <Input
             id="email"
             type="email"
@@ -96,7 +96,7 @@ export function SignupForm() {
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="password" className="text-xs">Password</Label>
+          <Label htmlFor="password" className="text-sm">Password</Label>
           <Input
             id="password"
             type="password"
@@ -108,7 +108,7 @@ export function SignupForm() {
             aria-describedby="password-hint"
             required
           />
-          <p id="password-hint" className="text-[11px] text-muted-foreground">
+          <p id="password-hint" className="text-xs text-muted-foreground">
             At least {MIN_PASSWORD_LENGTH} characters.
           </p>
         </div>
@@ -122,7 +122,7 @@ export function SignupForm() {
           )}
         </Button>
       </form>
-      <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
+      <div className="flex items-center justify-between text-sm text-muted-foreground pt-1">
         <span>Already registered?</span>
         <Link href="/login" className="text-primary font-medium hover:underline">Sign in</Link>
       </div>

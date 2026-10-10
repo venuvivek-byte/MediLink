@@ -3,7 +3,7 @@ import { PageSkeleton } from "@/components/layout/PageSkeleton";
 import { Info, QrCode } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import Header from "@/components/layout/Header";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PrintButton } from "@/components/ui/PrintButton";
 import { EmergencySummary } from "@/components/emergency/EmergencySummary";
@@ -61,7 +61,7 @@ async function EmergencyContent() {
           <CardContent className="space-y-3">
             {emergencyUrl ? (
               <>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   Demo mode uses one fixed sample link. The QR code holds only this link, never medical data.
                 </p>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -73,16 +73,16 @@ async function EmergencyContent() {
                       readOnly
                       aria-label="Emergency link"
                       value={emergencyUrl}
-                      className="w-full text-xs font-mono p-2.5 rounded-lg border bg-muted"
+                      className="w-full text-sm font-mono p-2.5 rounded-lg border bg-muted"
                     />
-                    <a href={emergencyUrl} target="_blank" rel="noreferrer">
-                      <Button size="sm" className="text-xs">Open responder view</Button>
+                    <a href={emergencyUrl} target="_blank" rel="noreferrer" className={buttonVariants({ size: "lg", className: "px-3.5" })}>
+                      Open responder view
                     </a>
                   </div>
                 </div>
               </>
             ) : (
-              <p role="note" className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <p role="note" className="text-sm text-muted-foreground flex items-center gap-1.5">
                 <Info className="w-4 h-4" aria-hidden="true" />
                 Emergency QR access is not available yet.
               </p>

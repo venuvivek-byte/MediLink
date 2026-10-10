@@ -27,7 +27,7 @@ export function MedicationEditor({ medication }: { medication: Medication }) {
 
   if (!open) {
     return (
-      <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setOpen(true)}>
+      <Button size="sm" variant="outline" className="h-9 text-sm gap-1" onClick={() => setOpen(true)}>
         <Pencil className="w-3.5 h-3.5" aria-hidden="true" /> Update status
       </Button>
     );
@@ -56,13 +56,13 @@ export function MedicationEditor({ medication }: { medication: Medication }) {
       }}
     >
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <label className="text-[11px] text-muted-foreground space-y-1" htmlFor={`${id}-status`}>
+        <label className="text-xs text-muted-foreground space-y-1" htmlFor={`${id}-status`}>
           <span>Are you taking it?</span>
           <select
             id={`${id}-status`}
             value={status}
             onChange={(e) => setStatus(e.target.value as MedicationStatus)}
-            className="w-full h-8 rounded-md border bg-background px-2 text-xs text-foreground"
+            className="w-full h-9 rounded-md border bg-background px-2 text-sm text-foreground"
           >
             {STATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -71,37 +71,37 @@ export function MedicationEditor({ medication }: { medication: Medication }) {
             ))}
           </select>
         </label>
-        <label className="text-[11px] text-muted-foreground space-y-1" htmlFor={`${id}-start`}>
+        <label className="text-xs text-muted-foreground space-y-1" htmlFor={`${id}-start`}>
           <span>Started (optional)</span>
           <input
             id={`${id}-start`}
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="w-full h-8 rounded-md border bg-background px-2 text-xs text-foreground"
+            className="w-full h-9 rounded-md border bg-background px-2 text-sm text-foreground"
           />
         </label>
-        <label className="text-[11px] text-muted-foreground space-y-1" htmlFor={`${id}-end`}>
+        <label className="text-xs text-muted-foreground space-y-1" htmlFor={`${id}-end`}>
           <span>Stopped (optional)</span>
           <input
             id={`${id}-end`}
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="w-full h-8 rounded-md border bg-background px-2 text-xs text-foreground"
+            className="w-full h-9 rounded-md border bg-background px-2 text-sm text-foreground"
           />
         </label>
       </div>
       {error && (
-        <p role="alert" className="text-[11px] text-destructive">
+        <p role="alert" className="text-xs text-destructive">
           {error}
         </p>
       )}
       <div className="flex gap-2">
-        <Button type="submit" size="sm" className="h-7 text-xs" disabled={pending}>
+        <Button type="submit" size="sm" className="h-9 text-sm" disabled={pending}>
           {pending ? "Saving…" : "Save"}
         </Button>
-        <Button type="button" size="sm" variant="outline" className="h-7 text-xs" disabled={pending} onClick={() => setOpen(false)}>
+        <Button type="button" size="sm" variant="outline" className="h-9 text-sm" disabled={pending} onClick={() => setOpen(false)}>
           Cancel
         </Button>
       </div>

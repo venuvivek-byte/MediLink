@@ -1,8 +1,10 @@
 import {
+  DEMO_ACCESS_LOGS,
   DEMO_ALLERGIES,
   DEMO_AUDIT_LOGS,
   DEMO_CONDITIONS,
   DEMO_DOCUMENTS,
+  DEMO_EMERGENCY_ACCESS,
   DEMO_LAB_RESULTS,
   DEMO_MEDICAL_EVENTS,
   DEMO_MEDICATIONS,
@@ -10,10 +12,12 @@ import {
   demoShares,
 } from "@/lib/demo/data";
 import {
+  mapAccessLog,
   mapAllergy,
   mapAuditEvent,
   mapCondition,
   mapDocument,
+  mapEmergencySettings,
   mapLabResult,
   mapMedication,
   mapProfile,
@@ -75,5 +79,16 @@ export class DemoPatientRepository implements PatientRepository {
   /** Demo mode is read-only: no decisions are ever stored. */
   async listDuplicateDecisions() {
     return [];
+  }
+
+  async getEmergencySettings() {
+    return this.own([DEMO_EMERGENCY_ACCESS]).map(mapEmergencySettings)[0] ?? null;
+  }
+
+  async listAccessLogs() {
+    return this.own(DEMO_ACCESS_LOGS)
+      .map(mapAccessLog)
+      .filter((e): e is NonNullable<typeof e> => e !== null)
+      .sort(byDateDesc((e) => e.occurredAt));
   }
 }

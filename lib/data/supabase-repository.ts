@@ -2,11 +2,15 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types/database.types";
 import {
+  EMERGENCY_ROW_COLUMNS,
+  SHARE_ROW_COLUMNS,
+  mapAccessLog,
   mapAllergy,
   mapAuditEvent,
   mapDuplicateDecision,
   mapCondition,
   mapDocument,
+  mapEmergencySettings,
   mapLabResult,
   mapMedication,
   mapProfile,
@@ -118,7 +122,7 @@ export class SupabasePatientRepository implements PatientRepository {
       "share links",
       await this.client
         .from("record_shares")
-        .select("id, label, scope, expires_at, revoked_at, created_at")
+        .select(SHARE_ROW_COLUMNS)
         .eq("patient_id", this.patientId)
         .order("created_at", { ascending: false })
     );
@@ -147,5 +151,32 @@ export class SupabasePatientRepository implements PatientRepository {
         .eq("patient_id", this.patientId)
     );
     return rows.map(mapDuplicateDecision).filter((d): d is NonNullable<typeof d> => d !== null);
+  }
+
+  async getEmergencySettings() {
+    // Explicit column list: token_hash never leaves the database.
+    const row = this.check(
+      "emergency link",
+      await this.client
+        .from("emergency_access")
+        .select(EMERGENCY_ROW_COLUMNS)
+        .eq("patient_id", this.patientId)
+        .is("revoked_at", null)
+        .maybeSingle()
+    );
+    return row ? mapEmergencySettings(row) : null;
+  }
+
+  async listAccessLogs() {
+    const rows = this.check(
+      "access history",
+      await this.client
+        .from("share_access_logs")
+        .select("id, share_id, emergency_access_id, outcome, user_agent, occurred_at")
+        .eq("patient_id", this.patientId)
+        .order("occurred_at", { ascending: false })
+        .limit(200)
+    );
+    return rows.map(mapAccessLog).filter((e): e is NonNullable<typeof e> => e !== null);
   }
 }

@@ -1,4 +1,5 @@
 import type {
+  AccessLogEntry,
   Allergy,
   AuditEvent,
   Condition,
@@ -9,6 +10,7 @@ import type {
   ShareLinkSummary,
   TimelineEvent,
   DuplicateDecision,
+  EmergencySettings,
 } from "./types";
 
 /**
@@ -28,6 +30,9 @@ export interface PatientRepository {
   listShareLinks(): Promise<ShareLinkSummary[]>;
   listAuditEvents(): Promise<AuditEvent[]>;
   listDuplicateDecisions(): Promise<DuplicateDecision[]>;
+  /** The live (not revoked) emergency link, if any. */
+  getEmergencySettings(): Promise<EmergencySettings | null>;
+  listAccessLogs(): Promise<AccessLogEntry[]>;
 }
 
 /** Thrown with a generic message; the cause is logged server-side without record contents. */

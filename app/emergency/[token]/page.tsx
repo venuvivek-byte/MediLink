@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { headers } from "next/headers";
 import { connection } from "next/server";
 import { ShieldAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmergencySummary } from "@/components/emergency/EmergencySummary";
 import { PublicNotice } from "@/components/share/PublicNotice";
-import { resolveEmergencyToken } from "@/lib/sharing/public-access";
+import { clientInfoFrom, openEmergencyLink } from "@/lib/sharing/public-access";
 import { getConfig } from "@/lib/config/env";
 
 export const metadata = { title: "Emergency information", robots: { index: false, follow: false } };
@@ -23,22 +24,23 @@ async function EmergencyContent({ params }: { params: Promise<{ token: string }>
   // Token, expiry and revocation are evaluated per request, never prerendered.
   await connection();
   const { token } = await params;
-  const repo = resolveEmergencyToken(token);
-  if (!repo) {
+  let view;
+  try {
+    view = await openEmergencyLink(token, clientInfoFrom(await headers()));
+  } catch (error) {
+    console.error((error as Error).message);
+    return (
+      <PublicNotice title="Emergency information could not be loaded">
+        Please try again. If this is an emergency, follow standard care and contact local emergency services.
+      </PublicNotice>
+    );
+  }
+  if (!view) {
     return (
       <PublicNotice title="This emergency link is not available">
         The link may be incorrect, expired or turned off by the patient.
       </PublicNotice>
     );
-  }
-
-  const [profile, allergies, conditions] = await Promise.all([
-    repo.getProfile(),
-    repo.listAllergies(),
-    repo.listConditions(),
-  ]);
-  if (!profile) {
-    return <PublicNotice title="This emergency link is not available">No emergency information is available.</PublicNotice>;
   }
 
   return (
@@ -55,7 +57,7 @@ async function EmergencyContent({ params }: { params: Promise<{ token: string }>
         </div>
         <Card>
           <CardContent className="p-6">
-            <EmergencySummary profile={profile} allergies={allergies} conditions={conditions} />
+            <EmergencySummary view={view} />
           </CardContent>
         </Card>
       </div>

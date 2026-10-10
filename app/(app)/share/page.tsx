@@ -1,16 +1,30 @@
+import { Suspense } from "react";
 import Header from "@/components/layout/Header";
+import { PageSkeleton } from "@/components/layout/PageSkeleton";
 import { ShareView } from "@/components/share/ShareView";
 import { getPatientRepository } from "@/lib/data";
 import { getConfig } from "@/lib/config/env";
 import { DEMO_SHARE_PIN, DEMO_SHARE_TOKEN } from "@/lib/demo/data";
-import { shareState } from "@/lib/sharing/policy";
+import { isLocked, shareState } from "@/lib/sharing/policy";
 
 export const metadata = { title: "Share records" };
 
-export default async function SharePage() {
+const SUBTITLE = "Give a clinician time-limited, read-only access to records you choose";
+
+// Patient data is request-time: stream it behind Suspense (Cache Components).
+export default function SharePage() {
+  return (
+    <Suspense fallback={<PageSkeleton title="Share records" subtitle={SUBTITLE} />}>
+      <ShareContent />
+    </Suspense>
+  );
+}
+
+async function ShareContent() {
   const shares = (await (await getPatientRepository()).listShareLinks()).map((share) => ({
     ...share,
     state: shareState(share),
+    locked: isLocked(share.lockedUntil),
   }));
   const config = getConfig();
   const demo =
@@ -20,7 +34,7 @@ export default async function SharePage() {
 
   return (
     <div className="flex-1 flex flex-col">
-      <Header title="Share records" subtitle="Give a clinician time-limited, read-only access to records you choose" />
+      <Header title="Share records" subtitle={SUBTITLE} />
       <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto w-full">
         <ShareView shares={shares} demo={demo} />
       </div>

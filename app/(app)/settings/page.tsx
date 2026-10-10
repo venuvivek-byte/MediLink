@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import { PageSkeleton } from "@/components/layout/PageSkeleton";
-import { Info, Phone, Server, User } from "lucide-react";
+import { Server, User } from "lucide-react";
 import Header from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPatientRepository } from "@/lib/data";
 import { getConfig } from "@/lib/config/env";
-import { formatDate } from "@/lib/format";
+import { ProfileForm } from "@/components/settings/ProfileForm";
 
 export const metadata = { title: "Settings" };
 
@@ -39,56 +39,39 @@ async function SettingsContent() {
             : "Not configured",
     },
     {
+      label: "Share and emergency links",
+      value:
+        config.mode === "demo"
+          ? "Fixed demo links"
+          : config.supabase?.serviceRoleKey
+            ? "Enabled"
+            : "Not available (SUPABASE_SERVICE_ROLE_KEY not set)",
+    },
+    {
       label: "OCR",
       value: config.ocr.enabled ? `${config.ocr.provider} (enabled in config)` : "Disabled",
     },
   ];
 
-  const rows: [string, string][] = profile
-    ? [
-        ["Name", profile.displayName],
-        ["Date of birth", profile.dateOfBirth ? formatDate(profile.dateOfBirth) : "Not recorded"],
-        ["Blood group", profile.bloodGroup ?? "Not recorded"],
-      ]
-    : [];
-
   return (
     <div className="flex-1 flex flex-col">
       <Header title="Settings" subtitle="Your profile and how this app is configured" />
       <div className="p-4 md:p-8 space-y-6 max-w-4xl mx-auto w-full">
-        <p role="note" className="text-sm text-muted-foreground flex items-center gap-1.5">
-          <Info className="w-4 h-4" aria-hidden="true" />
-          Editing your profile is not available yet.
-        </p>
-
         <Card className="border-border/80">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <User className="w-4 h-4 text-primary" aria-hidden="true" /> Profile
             </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Your name appears on records you share. Blood group, date of birth and emergency contact appear only on
+              your emergency card, and only if you tick them there.
+            </p>
           </CardHeader>
           <CardContent>
-            {profile ? <DefinitionList rows={rows} /> : <p className="text-sm text-muted-foreground">No profile yet.</p>}
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/80">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Phone className="w-4 h-4 text-primary" aria-hidden="true" /> Emergency contact
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {profile?.emergencyContact ? (
-              <DefinitionList
-                rows={[
-                  ["Name", profile.emergencyContact.name],
-                  ["Relationship", profile.emergencyContact.relationship ?? "Not recorded"],
-                  ["Phone", profile.emergencyContact.phone],
-                ]}
-              />
+            {profile ? (
+              <ProfileForm profile={profile} readOnly={config.mode === "demo"} />
             ) : (
-              <p className="text-sm text-muted-foreground">No emergency contact recorded.</p>
+              <p className="text-sm text-muted-foreground">No profile yet.</p>
             )}
           </CardContent>
         </Card>

@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PrintButton } from "@/components/ui/PrintButton";
 import { VerificationBadge } from "@/components/ui/VerificationBadge";
-import type { Allergy, Condition, LabResult, Medication } from "@/lib/data/types";
+import type { Allergy, Condition, LabResult, Medication, TimelineEvent } from "@/lib/data/types";
 import { formatDate, formatDateTime } from "@/lib/format";
 
 interface ClinicianSummaryProps {
@@ -14,11 +14,12 @@ interface ClinicianSummaryProps {
   medications: Medication[] | null;
   allergies: Allergy[] | null;
   labs: LabResult[] | null;
+  timeline: TimelineEvent[] | null;
 }
 
 /** Read-only. Contains no forms, links into the app, or record identifiers. */
 export function ClinicianSummary(props: ClinicianSummaryProps) {
-  const { patientName, expiresAt, isDemo, conditions, medications, allergies, labs } = props;
+  const { patientName, expiresAt, isDemo, conditions, medications, allergies, labs, timeline } = props;
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
@@ -110,6 +111,7 @@ export function ClinicianSummary(props: ClinicianSummaryProps) {
                       <th scope="col" className="py-2 pr-4 font-medium">Test</th>
                       <th scope="col" className="py-2 pr-4 font-medium">Date</th>
                       <th scope="col" className="py-2 pr-4 font-medium">Result</th>
+                      <th scope="col" className="py-2 pr-4 font-medium">Flag (from report)</th>
                       <th scope="col" className="py-2 font-medium">Reference range (from report)</th>
                     </tr>
                   </thead>
@@ -119,12 +121,36 @@ export function ClinicianSummary(props: ClinicianSummaryProps) {
                         <th scope="row" className="py-2 pr-4 font-semibold">{l.testName}</th>
                         <td className="py-2 pr-4 whitespace-nowrap">{formatDate(l.testDate)}</td>
                         <td className="py-2 pr-4 whitespace-nowrap">{l.value ?? "—"} {l.unit ?? ""}</td>
+                        <td className="py-2 pr-4">{l.reportFlag ?? "—"}</td>
                         <td className="py-2 text-muted-foreground">{l.referenceRange ?? "Not on report"}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+            )}
+          </Section>
+        )}
+
+        {timeline && (
+          <Section title="Visit timeline">
+            {timeline.length === 0 ? (
+              <Empty>None documented.</Empty>
+            ) : (
+              <ul className="divide-y divide-border">
+                {timeline.map((e) => (
+                  <li key={e.id} className="py-2 text-sm flex flex-wrap items-center gap-2">
+                    <span className="text-muted-foreground whitespace-nowrap">{formatDate(e.eventDate)}</span>
+                    <span className="font-semibold">{e.title}</span>
+                    {(e.providerName || e.facilityName) && (
+                      <span className="text-muted-foreground">
+                        {[e.providerName, e.facilityName].filter(Boolean).join(", ")}
+                      </span>
+                    )}
+                    <VerificationBadge status={e.reviewStatus} />
+                  </li>
+                ))}
+              </ul>
             )}
           </Section>
         )}

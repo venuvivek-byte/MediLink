@@ -4,6 +4,8 @@ import type { Json, Tables } from "@/lib/types/database.types";
 import { normalizeMedicationName, normalizeTestName } from "@/lib/domain/normalize";
 import { DOCUMENT_ERROR_MESSAGES, type DocumentErrorCode } from "@/lib/documents/errors";
 import type {
+  AccessLogEntry,
+  AccessOutcome,
   Allergy,
   AuditEvent,
   Condition,
@@ -11,6 +13,7 @@ import type {
   DuplicateDecision,
   DocumentType,
   EmergencyContact,
+  EmergencySettings,
   LabResult,
   Medication,
   MedicationStatus,
@@ -199,8 +202,10 @@ const SHARE_CATEGORIES: ShareCategory[] = [
 /** Excludes token_hash and pin_hash by construction. */
 export type ShareRow = Pick<
   Tables<"record_shares">,
-  "id" | "label" | "scope" | "expires_at" | "revoked_at" | "created_at"
+  "id" | "label" | "scope" | "expires_at" | "revoked_at" | "created_at" | "last_accessed_at" | "locked_until"
 >;
+
+export const SHARE_ROW_COLUMNS = "id, label, scope, expires_at, revoked_at, created_at, last_accessed_at, locked_until";
 
 export function mapShareLink(row: ShareRow): ShareLinkSummary {
   const scope = asRecord(row.scope);
@@ -211,9 +216,52 @@ export function mapShareLink(row: ShareRow): ShareLinkSummary {
     categories: rawCategories.filter((c): c is ShareCategory =>
       SHARE_CATEGORIES.includes(c as ShareCategory)
     ),
+    // Anything other than an explicit true keeps unreviewed records private.
+    includeUnreviewed: scope.include_unreviewed === true,
     expiresAt: row.expires_at,
     revokedAt: row.revoked_at,
     createdAt: row.created_at,
+    lastAccessedAt: row.last_accessed_at,
+    lockedUntil: row.locked_until,
+  };
+}
+
+/** Excludes token_hash by construction. */
+export type EmergencyRow = Omit<Tables<"emergency_access">, "token_hash" | "patient_id" | "consent_given_at" | "revoked_at" | "updated_at">;
+
+export const EMERGENCY_ROW_COLUMNS =
+  "id, show_blood_group, show_date_of_birth, show_allergies, show_conditions, show_emergency_contact, medication_ids, patient_note, expires_at, created_at, last_accessed_at";
+
+export function mapEmergencySettings(row: EmergencyRow): EmergencySettings {
+  return {
+    id: row.id,
+    showBloodGroup: row.show_blood_group,
+    showDateOfBirth: row.show_date_of_birth,
+    showAllergies: row.show_allergies,
+    showConditions: row.show_conditions,
+    showEmergencyContact: row.show_emergency_contact,
+    medicationIds: row.medication_ids,
+    patientNote: row.patient_note?.trim() || null,
+    expiresAt: row.expires_at,
+    createdAt: row.created_at,
+    lastAccessedAt: row.last_accessed_at,
+  };
+}
+
+const ACCESS_OUTCOMES: AccessOutcome[] = ["granted", "pin_failed", "locked", "expired", "revoked"];
+
+/** ip_hash is deliberately not mapped. */
+export function mapAccessLog(
+  row: Pick<Tables<"share_access_logs">, "id" | "share_id" | "emergency_access_id" | "outcome" | "user_agent" | "occurred_at">
+): AccessLogEntry | null {
+  if (!ACCESS_OUTCOMES.includes(row.outcome as AccessOutcome)) return null;
+  return {
+    id: row.id,
+    target: row.share_id ? "share" : "emergency",
+    shareId: row.share_id,
+    outcome: row.outcome as AccessOutcome,
+    userAgent: row.user_agent?.trim() || null,
+    occurredAt: row.occurred_at,
   };
 }
 

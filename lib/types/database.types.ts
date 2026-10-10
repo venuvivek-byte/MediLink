@@ -904,8 +904,35 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_share_pin_attempt: { Args: { p_share_id: string }; Returns: number }
       confirm_extraction: {
         Args: { p_extraction_id: string; p_review: Json }
+        Returns: string
+      }
+      create_emergency_access: {
+        Args: {
+          p_expires_at: string
+          p_id: string
+          p_medication_ids: string[]
+          p_patient_note: string
+          p_show_allergies: boolean
+          p_show_blood_group: boolean
+          p_show_conditions: boolean
+          p_show_date_of_birth: boolean
+          p_show_emergency_contact: boolean
+          p_token_hash: string
+        }
+        Returns: string
+      }
+      create_record_share: {
+        Args: {
+          p_categories: string[]
+          p_expires_at: string
+          p_include_unreviewed: boolean
+          p_label: string
+          p_pin_hash: string
+          p_token_hash: string
+        }
         Returns: string
       }
       delete_health_record: {
@@ -925,6 +952,30 @@ export type Database = {
         }
         Returns: string
       }
+      record_public_access: {
+        Args: {
+          p_emergency_access_id: string
+          p_ip_hash: string
+          p_outcome: string
+          p_share_id: string
+          p_user_agent: string
+        }
+        Returns: undefined
+      }
+      revoke_emergency_access: { Args: never; Returns: undefined }
+      revoke_record_share: { Args: { p_share_id: string }; Returns: undefined }
+      update_emergency_access: {
+        Args: {
+          p_medication_ids: string[]
+          p_patient_note: string
+          p_show_allergies: boolean
+          p_show_blood_group: boolean
+          p_show_conditions: boolean
+          p_show_date_of_birth: boolean
+          p_show_emergency_contact: boolean
+        }
+        Returns: undefined
+      }
       update_medication: {
         Args: {
           p_end_date: string
@@ -933,6 +984,19 @@ export type Database = {
           p_status: string
         }
         Returns: undefined
+      }
+      update_profile: {
+        Args: {
+          p_blood_group: string
+          p_date_of_birth: string
+          p_display_name: string
+          p_emergency_contact: Json
+        }
+        Returns: undefined
+      }
+      validate_emergency_fields: {
+        Args: { p_medication_ids: string[]; p_note: string }
+        Returns: string[]
       }
     }
     Enums: {

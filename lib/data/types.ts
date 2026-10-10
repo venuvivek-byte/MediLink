@@ -128,9 +128,41 @@ export interface ShareLinkSummary {
   id: string;
   label: string;
   categories: ShareCategory[];
+  /** False: only records the patient has reviewed are shown to the clinician. */
+  includeUnreviewed: boolean;
   expiresAt: string;
   revokedAt: string | null;
   createdAt: string | null;
+  lastAccessedAt: string | null;
+  /** Set after repeated wrong PINs. */
+  lockedUntil: string | null;
+}
+
+/** The patient's live emergency link settings. Never includes the token or its hash. */
+export interface EmergencySettings {
+  id: string;
+  showBloodGroup: boolean;
+  showDateOfBirth: boolean;
+  showAllergies: boolean;
+  showConditions: boolean;
+  showEmergencyContact: boolean;
+  medicationIds: string[];
+  patientNote: string | null;
+  expiresAt: string;
+  createdAt: string;
+  lastAccessedAt: string | null;
+}
+
+export type AccessOutcome = "granted" | "pin_failed" | "locked" | "expired" | "revoked";
+
+/** One attempt to open a share or emergency link. The IP is stored only as a keyed hash and never shown. */
+export interface AccessLogEntry {
+  id: string;
+  target: "share" | "emergency";
+  shareId: string | null;
+  outcome: AccessOutcome;
+  userAgent: string | null;
+  occurredAt: string;
 }
 
 export interface AuditEvent {

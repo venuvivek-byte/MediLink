@@ -558,3 +558,46 @@ export const DEMO_AUDIT_LOGS: Tables<"audit_logs">[] = [
     created_at: "2025-07-17T09:30:00Z",
   },
 ];
+
+/** Demo emergency link settings (the link itself is DEMO_EMERGENCY_TOKEN). */
+export const DEMO_EMERGENCY_ACCESS: Tables<"emergency_access"> = {
+  id: "emergency-001",
+  patient_id: DEMO_PATIENT.user_id,
+  token_hash: "demo-emergency-hash",
+  show_blood_group: true,
+  show_date_of_birth: true,
+  show_allergies: true,
+  show_conditions: true,
+  show_emergency_contact: true,
+  medication_ids: ["med-001", "med-002"],
+  patient_note: "Type 2 diabetic. Carries glucose tablets.",
+  consent_given_at: "2025-10-01T10:00:00Z",
+  expires_at: "2099-01-01T00:00:00Z",
+  revoked_at: null,
+  last_accessed_at: null,
+  created_at: "2025-10-01T10:00:00Z",
+  updated_at: "2025-10-01T10:00:00Z",
+};
+
+export const DEMO_ACCESS_LOGS: Tables<"share_access_logs">[] = [
+  {
+    id: "access-001",
+    patient_id: DEMO_PATIENT.user_id,
+    share_id: "share-001",
+    emergency_access_id: null,
+    outcome: "pin_failed",
+    ip_hash: null,
+    user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+    occurred_at: "2025-10-11T09:14:00Z",
+  },
+  {
+    id: "access-002",
+    patient_id: DEMO_PATIENT.user_id,
+    share_id: "share-001",
+    emergency_access_id: null,
+    outcome: "granted",
+    ip_hash: null,
+    user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+    occurred_at: "2025-10-11T09:15:00Z",
+  },
+];

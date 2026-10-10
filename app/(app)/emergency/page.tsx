@@ -1,92 +1,87 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { PageSkeleton } from "@/components/layout/PageSkeleton";
-import { Info, QrCode } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
+import { QrCode } from "lucide-react";
 import Header from "@/components/layout/Header";
-import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PrintButton } from "@/components/ui/PrintButton";
 import { EmergencySummary } from "@/components/emergency/EmergencySummary";
-import { getPatientRepository } from "@/lib/data";
-import { getConfig } from "@/lib/config/env";
-import { DEMO_EMERGENCY_TOKEN } from "@/lib/demo/data";
+import { EmergencyManager } from "@/components/emergency/EmergencyManager";
+import { requireSession } from "@/lib/auth/session";
+import { repositoryForSession } from "@/lib/data";
+import { buildEmergencyView } from "@/lib/sharing/emergency-view";
+import { emergencyUrlFor } from "@/lib/sharing/service";
+import { shareState } from "@/lib/sharing/policy";
 
 export const metadata = { title: "Emergency card" };
+
+const SUBTITLE = "What a first responder sees when they scan your QR code";
 
 // Patient data is request-time: stream it behind Suspense so navigation shows
 // the page immediately (Cache Components). Health data is never server-cached.
 export default function EmergencyPage() {
   return (
-    <Suspense fallback={<PageSkeleton title="Emergency card" subtitle="What a first responder sees when they scan your QR code" />}>
+    <Suspense fallback={<PageSkeleton title="Emergency card" subtitle={SUBTITLE} />}>
       <EmergencyContent />
     </Suspense>
   );
 }
 
 async function EmergencyContent() {
-  const repo = await getPatientRepository();
-  const [profile, allergies, conditions] = await Promise.all([
+  const session = await requireSession();
+  const repo = await repositoryForSession(session);
+  const [profile, allergies, conditions, medications, stored] = await Promise.all([
     repo.getProfile(),
     repo.listAllergies(),
     repo.listConditions(),
+    repo.listMedications(),
+    repo.getEmergencySettings(),
   ]);
-  const config = getConfig();
-  const emergencyUrl = config.mode === "demo" ? `${config.appUrl}/emergency/${DEMO_EMERGENCY_TOKEN}` : null;
+  // An expired link is treated like no link: the patient creates a new one.
+  const settings = stored && shareState({ expiresAt: stored.expiresAt, revokedAt: null }) === "active" ? stored : null;
+  const url = settings ? emergencyUrlFor(session, settings.id) : null;
+  const view = settings && profile ? buildEmergencyView(settings, { profile, allergies, conditions, medications }) : null;
 
   return (
     <div className="flex-1 flex flex-col">
-      <Header title="Emergency card" subtitle="What a first responder sees when they scan your QR code" />
+      <Header title="Emergency card" subtitle={SUBTITLE} />
       <div className="p-4 md:p-8 space-y-6 max-w-4xl mx-auto w-full">
-        <Card className="border-border/80">
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-base font-semibold">Preview</CardTitle>
-            <PrintButton label="Print card" />
-          </CardHeader>
-          <CardContent>
-            {profile ? (
-              <EmergencySummary profile={profile} allergies={allergies} conditions={conditions} />
-            ) : (
-              <p className="text-sm text-muted-foreground">Add your profile details in Settings first.</p>
-            )}
-          </CardContent>
-        </Card>
-
         <Card className="border-border/80">
           <CardHeader>
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <QrCode className="w-4 h-4 text-primary" aria-hidden="true" />
-              Emergency QR code
+              Emergency link and QR code
             </CardTitle>
           </CardHeader>
+          <CardContent>
+            <EmergencyManager
+              key={settings?.id ?? "none"}
+              settings={settings}
+              url={url}
+              demo={session.kind === "demo"}
+              medications={medications.map((m) => ({ id: m.id, name: m.name, current: m.status === "current" }))}
+            />
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/80">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-semibold">Preview: exactly what a responder sees</CardTitle>
+          </CardHeader>
           <CardContent className="space-y-3">
-            {emergencyUrl ? (
-              <>
-                <p className="text-sm text-muted-foreground">
-                  Demo mode uses one fixed sample link. The QR code holds only this link, never medical data.
-                </p>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                  <div className="p-2 bg-white rounded-lg border self-start">
-                    <QRCodeSVG value={emergencyUrl} size={96} aria-label="QR code for the demo emergency link" />
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <input
-                      readOnly
-                      aria-label="Emergency link"
-                      value={emergencyUrl}
-                      className="w-full text-sm font-mono p-2.5 rounded-lg border bg-muted"
-                    />
-                    <a href={emergencyUrl} target="_blank" rel="noreferrer" className={buttonVariants({ size: "lg", className: "px-3.5" })}>
-                      Open responder view
-                    </a>
-                  </div>
-                </div>
-              </>
+            {view ? (
+              <EmergencySummary view={view} />
             ) : (
-              <p role="note" className="text-sm text-muted-foreground flex items-center gap-1.5">
-                <Info className="w-4 h-4" aria-hidden="true" />
-                Emergency QR access is not available yet.
+              <p className="text-sm text-muted-foreground">
+                {profile ? "Create an emergency link to see the preview." : "No profile found."}
               </p>
             )}
+            <p className="text-sm text-muted-foreground">
+              Blood group, date of birth and emergency contact come from your{" "}
+              <Link href="/settings" className="text-primary underline">
+                profile settings
+              </Link>
+              .
+            </p>
           </CardContent>
         </Card>
       </div>

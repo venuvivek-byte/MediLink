@@ -7,11 +7,7 @@ import {
   ArrowRight,
   FileText,
   Loader2,
-  Pill,
-  QrCode,
-  Share2,
   ShieldCheck,
-  Upload,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { AppMode } from "@/lib/config/schema";
@@ -100,77 +96,7 @@ export function LandingContent({ mode, notice }: LandingContentProps) {
         </div>
       </section>
 
-      {/* ─── SECTION 2: BENTO FEATURES ────────────────────────────────────── */}
-      <section id="features-section" className="py-20 bg-white border-y border-slate-200/80 px-6 sm:px-12">
-        <div className="max-w-7xl mx-auto space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <h2 className="text-3xl sm:text-4xl font-serif font-medium text-slate-900 tracking-tight">
-              Built for real clinical life
-            </h2>
-            <p className="text-sm sm:text-base text-slate-600">
-              Powerful tools designed to keep patients informed and clinicians fast.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Feature 1 */}
-            <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200/80 flex flex-col justify-between hover:border-emerald-300 transition-all">
-              <div>
-                <div className="w-10 h-10 rounded-xl bg-vault-800 text-white flex items-center justify-center mb-4 shadow-sm">
-                  <Upload className="w-5 h-5" aria-hidden="true" />
-                </div>
-                <h3 className="font-semibold text-base text-slate-900">Universal Intake &amp; OCR</h3>
-                <p className="text-xs text-slate-600 mt-2 leading-relaxed">
-                  Upload prescription scans, lab PDFs, or clinic notes. Smart text recognition extracts medications and lab panels for your confirmation.
-                </p>
-              </div>
-              <span className="text-[11px] font-semibold text-vault-800 mt-4 inline-block">OCR &amp; AI Assist</span>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200/80 flex flex-col justify-between hover:border-emerald-300 transition-all">
-              <div>
-                <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center mb-4 shadow-sm">
-                  <Pill className="w-5 h-5" aria-hidden="true" />
-                </div>
-                <h3 className="font-semibold text-base text-slate-900">Duplicate Medication Flags</h3>
-                <p className="text-xs text-slate-600 mt-2 leading-relaxed">
-                  Avoid accidental double-dosing. Our rule engine flags identical drugs prescribed by different doctors so you can review with your pharmacist.
-                </p>
-              </div>
-              <span className="text-[11px] font-semibold text-amber-700 mt-4 inline-block">Safety Rules Active</span>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200/80 flex flex-col justify-between hover:border-emerald-300 transition-all">
-              <div>
-                <div className="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center mb-4 shadow-sm">
-                  <Share2 className="w-5 h-5" aria-hidden="true" />
-                </div>
-                <h3 className="font-semibold text-base text-slate-900">PIN-Protected Share Links</h3>
-                <p className="text-xs text-slate-600 mt-2 leading-relaxed">
-                  Clinicians don&apos;t have time to create passwords. Share a clean summary link protected by a 4-digit PIN and 24-hour expiration.
-                </p>
-              </div>
-              <span className="text-[11px] font-semibold text-teal-700 mt-4 inline-block">Zero Friction Access</span>
-            </div>
-
-            {/* Feature 4 */}
-            <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200/80 flex flex-col justify-between hover:border-emerald-300 transition-all">
-              <div>
-                <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center mb-4 shadow-sm">
-                  <QrCode className="w-5 h-5" aria-hidden="true" />
-                </div>
-                <h3 className="font-semibold text-base text-slate-900">Emergency Paramedic Card</h3>
-                <p className="text-xs text-slate-600 mt-2 leading-relaxed">
-                  A dedicated QR code providing first responders instant access to critical allergies, blood group, and emergency contacts.
-                </p>
-              </div>
-              <span className="text-[11px] font-semibold text-rose-700 mt-4 inline-block">Emergency Ready</span>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ─── SECTION 3: HOW IT WORKS ──────────────────────────────────────── */}
       <section className="py-20 px-6 sm:px-12 max-w-7xl mx-auto">
@@ -263,7 +189,6 @@ export function LandingContent({ mode, notice }: LandingContentProps) {
 
           <div className="flex items-center gap-6">
             <a href="#about-section" className="hover:text-slate-800 transition-colors">About</a>
-            <a href="#features-section" className="hover:text-slate-800 transition-colors">Features</a>
             <Link href="/emergency" className="hover:text-slate-800 transition-colors">Emergency Access</Link>
           </div>
 

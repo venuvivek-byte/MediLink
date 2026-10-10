@@ -224,6 +224,55 @@
   animation: fade-in 0.3s ease-out;
 }
 
+/* Scroll down indicator animations */
+@keyframes scroll-dot {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  65% {
+    transform: translateY(7px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(11px);
+    opacity: 0;
+  }
+}
+
+.animate-scroll-dot {
+  animation: scroll-dot 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes bounce-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(3px);
+  }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s ease-in-out infinite;
+}
+
+@keyframes float-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-float-subtle {
+  animation: float-subtle 3s ease-in-out infinite;
+}
+
 /* Demo mode banner stripe */
 .demo-stripe {
   background: repeating-linear-gradient(

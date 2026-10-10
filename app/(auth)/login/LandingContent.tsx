@@ -46,7 +46,7 @@ export function LandingContent({ mode, notice }: LandingContentProps) {
         </div>
       )}
       {/* ─── SECTION 1: ABOUT / THE PROBLEM ───────────────────────────────── */}
-      <section id="about-section" className="py-20 sm:py-28 px-6 sm:px-12 max-w-7xl mx-auto">
+      <section id="about-section" className="scroll-mt-8 py-20 sm:py-28 px-6 sm:px-12 max-w-7xl mx-auto">
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <span className="text-xs font-semibold uppercase tracking-wider text-vault-800 bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-100 inline-block">
             The Patient-Centric Health Vault

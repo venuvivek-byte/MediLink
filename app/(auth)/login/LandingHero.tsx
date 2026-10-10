@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowDown, ArrowRight, Heart, Loader2 } from "lucide-react";
+import { ArrowRight, ChevronDown, Heart, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { AppMode } from "@/lib/config/schema";
 import { startDemoSessionAction } from "../actions";
@@ -15,6 +15,15 @@ interface LandingHeroProps {
 export function LandingHero({ mode }: LandingHeroProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [hasScrolled, setHasScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setHasScrolled(window.scrollY > 40);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const handleGetStarted = () => {
     setError(null);
@@ -126,14 +135,31 @@ export function LandingHero({ mode }: LandingHeroProps) {
       </div>
 
       {/* Bottom Scroll Indicator */}
-      <div className="relative z-20 pb-5 text-center">
+      <div
+        className={`relative z-20 pb-6 text-center transition-all duration-500 ${
+          hasScrolled ? "opacity-0 pointer-events-none translate-y-3" : "opacity-100 translate-y-0"
+        }`}
+      >
         <a
           href="#about-section"
           onClick={handleScrollToContent}
-          className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/75 hover:bg-white/95 backdrop-blur-md text-xs font-semibold text-[#063326] transition-all shadow-xs border border-white/80 group"
+          className="inline-flex items-center gap-2.5 px-4.5 py-2 rounded-full bg-white/80 hover:bg-white/95 backdrop-blur-md text-xs font-semibold text-[#063326] transition-all duration-300 shadow-xs hover:shadow-md border border-white/90 hover:scale-105 active:scale-95 group cursor-pointer animate-float-subtle"
+          aria-label="Scroll down to explore features"
         >
-          <span>Scroll down to explore</span>
-          <ArrowDown className="w-3.5 h-3.5 animate-bounce group-hover:translate-y-0.5" aria-hidden="true" />
+          {/* Animated mouse scroll capsule */}
+          <span
+            className="w-4 h-6 rounded-full border-[1.5px] border-[#0a3528]/50 group-hover:border-[#0a3528] flex justify-center pt-1 transition-colors"
+            aria-hidden="true"
+          >
+            <span className="w-1 h-1.5 rounded-full bg-[#0a3528] animate-scroll-dot" />
+          </span>
+
+          <span className="tracking-wide">Scroll down to explore</span>
+
+          <ChevronDown
+            className="w-4 h-4 text-[#0a3528]/80 group-hover:text-[#0a3528] group-hover:translate-y-0.5 transition-all animate-bounce-subtle"
+            aria-hidden="true"
+          />
         </a>
       </div>
     </section>
